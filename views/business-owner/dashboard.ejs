@@ -1,0 +1,256 @@
+<%- include('../include/admin-header') %>
+
+<style>
+  .bundle-status-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    color: white;
+    overflow: hidden;
+  }
+  
+  .bundle-status-card.no-bundle {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+  
+  .progress-bundle {
+    height: 10px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .progress-bundle .progress-bar {
+    background: white;
+    border-radius: 5px;
+  }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3"><i class="fas fa-chart-line me-2"></i>Business Dashboard</h2>
+            <p class="text-muted">Welcome back! Here's an overview of your business performance.</p>
+        </div>
+    </div>
+
+    <!-- Bundle Status Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <% if (hasBundle && bundleInfo) { %>
+            <div class="bundle-status-card shadow p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fas fa-cubes fa-2x me-3"></i>
+                            <div>
+                                <h5 class="mb-0"><%= bundleInfo.tierName %> Bundle</h5>
+                                <small class="opacity-75">Your current product bundle</small>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Products Used</span>
+                                <span><%= bundleInfo.productsUsed %> / <%= bundleInfo.productsAllowed === 999 ? '∞' : bundleInfo.productsAllowed %></span>
+                            </div>
+                            <div class="progress progress-bundle">
+                                <div class="progress-bar" style="width: <%= bundleInfo.productsAllowed === 999 ? 10 : (bundleInfo.productsUsed / bundleInfo.productsAllowed * 100) %>%"></div>
+                            </div>
+                        </div>
+                        <small class="opacity-75">
+                            <% if (bundleInfo.productsAllowed === 999) { %>
+                                Unlimited products available
+                            <% } else { %>
+                                <%= bundleInfo.remaining %> product slots remaining
+                            <% } %>
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <a href="/business-owner/buy-bundle" class="btn btn-light btn-lg">
+                            <i class="fas fa-arrow-up me-2"></i>Upgrade Bundle
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <% } else { %>
+            <div class="bundle-status-card no-bundle shadow p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                            <div>
+                                <h5 class="mb-1">No Active Bundle</h5>
+                                <p class="mb-0 opacity-75">Purchase a product bundle to start listing your products on our platform.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <a href="/business-owner/buy-bundle" class="btn btn-light btn-lg">
+                            <i class="fas fa-shopping-cart me-2"></i>Buy Bundle
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Products
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= totalProducts %></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-box fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                In Stock
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= inStockProducts %></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Out of Stock
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= outOfStockProducts %></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Revenue
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">$<%= totalRevenue %></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <a href="/business-owner/add-product" class="btn btn-success btn-block btn-lg">
+                                <i class="fas fa-plus-circle me-2"></i>Add New Product
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="/business-owner/products" class="btn btn-primary btn-block btn-lg">
+                                <i class="fas fa-list me-2"></i>Manage Products
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <a href="/business-owner/income-analytics" class="btn btn-info btn-block btn-lg">
+                                <i class="fas fa-chart-bar me-2"></i>View Analytics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Products -->
+    <% if (recentProducts && recentProducts.length > 0) { %>
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Products</h6>
+                    <a href="/business-owner/products" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% recentProducts.forEach(product => { %>
+                                <tr>
+                                    <td>
+                                        <img src="/images/<%= product.image %>" alt="<%= product.name %>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.src='/images/product1.svg'">
+                                    </td>
+                                    <td><%= product.name %></td>
+                                    <td><span class="badge badge-info"><%= product.category %></span></td>
+                                    <td>$<%= product.basePrice ? product.basePrice.toFixed(2) : '0.00' %></td>
+                                    <td>
+                                        <% if (product.stockQuantity > 0) { %>
+                                            <span class="badge badge-success"><%= product.stockQuantity %> in stock</span>
+                                        <% } else { %>
+                                            <span class="badge badge-danger">Out of stock</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <a href="/business-owner/products/<%= product._id %>/edit" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } %>
+</div>
+
+<%- include('../include/admin-footer') %>

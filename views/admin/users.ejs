@@ -1,0 +1,152 @@
+<%- include('../include/admin-header') %>
+
+    <style>
+        .users-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card.green {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .stat-card.orange {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        .stat-card h3 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .table-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 8px 8px 0 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+    </style>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <h2><i class="fas fa-users"></i> User Management</h2>
+                <p>Manage user accounts, permissions, and user roles in your system.</p>
+            </div>
+
+            <!-- User Statistics -->
+            <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <h3><%= users.length %></h3>
+                            <p class="mb-0"><i class="fas fa-users"></i> Total Users</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card orange">
+                            <h3><%= users.filter(u => u.role === 'admin').length %></h3>
+                            <p class="mb-0"><i class="fas fa-user-shield"></i> Admins</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stat-card green">
+                            <h3><%= users.filter(u => u.role === 'customer').length %></h3>
+                            <p class="mb-0"><i class="fas fa-user"></i> Customers</p>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- Users Table -->
+            <div class="content-card">
+                    <div class="table-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list"></i> All Users (<%= users.length %>)
+                        </h5>
+                    </div>
+                    
+                    <% if (users.length === 0) { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No users found.</p>
+                        </div>
+                    <% } else { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><i class="fas fa-user"></i> Username</th>
+                                        <th><i class="fas fa-envelope"></i> Email</th>
+                                        <th><i class="fas fa-shield-alt"></i> Role</th>
+                                        <th><i class="fas fa-calendar"></i> Created</th>
+                                        <th><i class="fas fa-cog"></i> Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% users.forEach(user => { %>
+                                        <tr>
+                                            <td>
+                                                <strong><%= user.username %></strong>
+                                            </td>
+                                            <td><%= user.email %></td>
+                                            <td>
+                                                <% if (user.role === 'admin') { %>
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-user-shield"></i> ADMIN
+                                                    </span>
+                                                <% } else if (user.role === 'product_manager') { %>
+                                                    <span class="badge bg-warning">
+                                                        <i class="fas fa-user-cog"></i> PRODUCT MANAGER
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-user"></i> CUSTOMER
+                                                    </span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (user.createdAt) { %>
+                                                    <%= new Date(user.createdAt).toLocaleDateString() %>
+                                                <% } else { %>
+                                                    <span class="text-muted">N/A</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (user._id.toString() !== userId) { %>
+                                                    <form method="POST" action="/admin/users/role" style="display: inline;">
+                                                        <input type="hidden" name="userId" value="<%= user._id %>">
+                                                        <div class="input-group input-group-sm" style="width: 200px;">
+                                                            <select name="role" class="form-select form-select-sm" onchange="this.form.submit()">
+                                                                <option value="customer" <%= user.role === 'customer' ? 'selected' : '' %>>Customer</option>
+                                                                <option value="product_manager" <%= user.role === 'product_manager' ? 'selected' : '' %>>Product Manager</option>
+                                                                <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                                                            </select>
+                                                            <button type="submit" class="btn btn-outline-primary btn-sm">
+                                                                <i class="fas fa-save"></i>
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                <% } else { %>
+                                                    <span class="badge bg-info">
+                                                        <i class="fas fa-user-check"></i> Current User
+                                                    </span>
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<%- include('../include/admin-footer') %>

@@ -1,0 +1,310 @@
+<%- include('../include/admin-header') %>
+
+<style>
+  .bundle-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .bundle-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  }
+  
+  .bundle-card.popular {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  }
+  
+  .bundle-card.popular::before {
+    content: 'Most Popular';
+    position: absolute;
+    top: 12px;
+    right: -30px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    color: white;
+    padding: 4px 40px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transform: rotate(45deg);
+    z-index: 10;
+  }
+  
+  .bundle-header {
+    padding: 24px;
+    text-align: center;
+    border-radius: 14px 14px 0 0;
+  }
+  
+  .bundle-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
+    color: white;
+  }
+  
+  .bundle-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  
+  .bundle-price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1e293b;
+  }
+  
+  .bundle-price span {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #64748b;
+  }
+  
+  .bundle-products {
+    background: #f8fafc;
+    padding: 12px 24px;
+    text-align: center;
+    font-weight: 600;
+    color: #475569;
+  }
+  
+  .bundle-features {
+    padding: 24px;
+  }
+  
+  .bundle-features ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .bundle-features li {
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #475569;
+  }
+  
+  .bundle-features li i {
+    color: #10b981;
+    font-size: 0.9rem;
+  }
+  
+  .bundle-action {
+    padding: 0 24px 24px;
+  }
+  
+  .btn-bundle {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .current-bundle-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  
+  .progress-custom {
+    height: 12px;
+    border-radius: 6px;
+    background: #e2e8f0;
+  }
+  
+  .progress-custom .progress-bar {
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+  }
+  
+  [data-theme="dark"] .bundle-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+  
+  [data-theme="dark"] .bundle-products {
+    background: #0f172a;
+  }
+  
+  [data-theme="dark"] .bundle-price {
+    color: #f1f5f9;
+  }
+  
+  [data-theme="dark"] .current-bundle-card {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  }
+</style>
+
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12 text-center">
+      <h2 class="mb-3"><i class="fas fa-cubes me-2"></i>Choose Your Product Bundle</h2>
+      <p class="text-muted">Select a bundle to start listing your products on our platform</p>
+    </div>
+  </div>
+
+  <% if (currentBundle && currentBundle.tier !== 'none') { %>
+  <!-- Current Bundle Status -->
+  <div class="row mb-4 justify-content-center">
+    <div class="col-lg-8">
+      <div class="current-bundle-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="mb-1"><i class="fas fa-box-open me-2 text-primary"></i>Current Bundle: <%= currentBundle.tierName %></h5>
+            <small class="text-muted">
+              <% if (currentBundle.expiryDate) { %>
+                Expires: <%= new Date(currentBundle.expiryDate).toLocaleDateString() %>
+              <% } else { %>
+                No expiration
+              <% } %>
+            </small>
+          </div>
+          <div class="text-end">
+            <span class="h4 mb-0 text-primary"><%= currentBundle.productsUsed %></span>
+            <span class="text-muted">/ <%= currentBundle.productsAllowed === 999 ? '∞' : currentBundle.productsAllowed %></span>
+            <small class="d-block text-muted">products used</small>
+          </div>
+        </div>
+        <div class="progress progress-custom">
+          <div class="progress-bar" style="width: <%= currentBundle.productsAllowed === 999 ? 10 : (currentBundle.productsUsed / currentBundle.productsAllowed * 100) %>%"></div>
+        </div>
+        <div class="mt-2 text-end">
+          <small class="text-muted">
+            <% if (currentBundle.productsAllowed === 999) { %>
+              Unlimited products remaining
+            <% } else { %>
+              <%= currentBundle.productsAllowed - currentBundle.productsUsed %> products remaining
+            <% } %>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Bundle Cards -->
+  <div class="row justify-content-center">
+    <% Object.entries(bundles).forEach(([key, bundle]) => { %>
+    <div class="col-lg-4 col-md-6 mb-4">
+      <div class="bundle-card h-100 <%= bundle.popular ? 'popular' : '' %>">
+        <div class="bundle-header">
+          <div class="bundle-icon" style="background: <%= bundle.color %>;">
+            <i class="fas <%= bundle.icon %>"></i>
+          </div>
+          <h3 class="bundle-name"><%= bundle.name %></h3>
+          <div class="bundle-price">
+            $<%= bundle.price %><span>/one-time</span>
+          </div>
+        </div>
+        
+        <div class="bundle-products">
+          <i class="fas fa-box me-2"></i>
+          <%= bundle.products === 999 ? 'Unlimited' : bundle.products %> Products
+        </div>
+        
+        <div class="bundle-features">
+          <ul>
+            <li><i class="fas fa-check"></i> List up to <%= bundle.products === 999 ? 'unlimited' : bundle.products %> products</li>
+            <li><i class="fas fa-check"></i> Product analytics dashboard</li>
+            <li><i class="fas fa-check"></i> Income tracking</li>
+            <li><i class="fas fa-check"></i> Customer order notifications</li>
+            <% if (bundle.products >= 15) { %>
+            <li><i class="fas fa-check"></i> Priority support</li>
+            <% } %>
+            <% if (bundle.products >= 20 || bundle.products === 999) { %>
+            <li><i class="fas fa-check"></i> Featured product placement</li>
+            <% } %>
+          </ul>
+        </div>
+        
+        <div class="bundle-action">
+          <% if (currentBundle && currentBundle.tier === key) { %>
+            <button class="btn btn-secondary btn-bundle" disabled>
+              <i class="fas fa-check me-2"></i>Current Plan
+            </button>
+          <% } else { %>
+            <form action="/business-owner/purchase-bundle" method="POST">
+              <input type="hidden" name="tier" value="<%= key %>">
+              <button type="submit" class="btn btn-primary btn-bundle" style="background: <%= bundle.color %>; border-color: <%= bundle.color %>;">
+                <i class="fas fa-shopping-cart me-2"></i>
+                <% if (currentBundle && currentBundle.tier !== 'none') { %>
+                  Upgrade to <%= bundle.name %>
+                <% } else { %>
+                  Get <%= bundle.name %>
+                <% } %>
+              </button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <% }); %>
+  </div>
+
+  <!-- FAQ Section -->
+  <div class="row mt-5 justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-header bg-light">
+          <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h5>
+        </div>
+        <div class="card-body">
+          <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                  How does the product limit work?
+                </button>
+              </h2>
+              <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Each bundle allows you to list a specific number of products. Once you reach your limit, you can upgrade to a higher tier or purchase an additional bundle.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                  Can I upgrade my bundle later?
+                </button>
+              </h2>
+              <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Yes! You can upgrade to a higher tier at any time. Your existing products will remain, and you'll get additional product slots.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                  How do I receive payment for my sales?
+                </button>
+              </h2>
+              <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Payments for your product sales are processed weekly. You can view your earnings in the Income Analytics section of your dashboard.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../include/admin-footer') %>

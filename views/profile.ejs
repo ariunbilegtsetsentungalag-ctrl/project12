@@ -1,0 +1,875 @@
+<%- include('include/header') %>
+
+<style>
+/* Custom Date Picker Styles */
+.date-picker-wrapper {
+  position: relative;
+}
+
+.date-picker-input {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.date-picker-input:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.date-picker-input.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+.date-icon {
+  color: var(--primary);
+  margin-right: 10px;
+  font-size: 1.1rem;
+}
+
+.date-display {
+  flex: 1;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.date-display.has-value {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.date-arrow {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  transition: transform 0.3s ease;
+}
+
+.date-picker-input.active .date-arrow {
+  transform: rotate(180deg);
+}
+
+.date-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px) scale(0.98);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.date-picker-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.date-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+  color: white;
+}
+
+.date-nav-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.date-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.date-picker-selects {
+  display: flex;
+  gap: 8px;
+}
+
+.date-select {
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  color: #1e293b;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231e293b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+
+.date-select:hover {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.date-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+.date-select option {
+  color: #1e293b;
+  background: white;
+}
+
+.date-picker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 12px 16px 8px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.date-picker-weekdays span {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.date-picker-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 12px 16px;
+}
+
+.date-day {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.date-day:hover:not(.disabled):not(.selected) {
+  background: #f1f5f9;
+  transform: scale(1.1);
+}
+
+.date-day.other-month {
+  color: #cbd5e1;
+}
+
+.date-day.today {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.date-day.today::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+
+.date-day.selected {
+  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+  color: white;
+  font-weight: 600;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.date-day.selected::after {
+  display: none;
+}
+
+.date-day.disabled {
+  color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+.date-picker-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.date-clear-btn, .date-today-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-clear-btn {
+  background: transparent;
+  color: #64748b;
+}
+
+.date-clear-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.date-today-btn {
+  background: var(--primary);
+  color: white;
+}
+
+.date-today-btn:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+/* Dark mode support */
+[data-theme="dark"] .date-picker-input {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .date-display {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .date-display.has-value {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .date-picker-dropdown {
+  background: #1e293b;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .date-picker-weekdays {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .date-day {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .date-day:hover:not(.disabled):not(.selected) {
+  background: #334155;
+}
+
+[data-theme="dark"] .date-day.other-month {
+  color: #475569;
+}
+
+[data-theme="dark"] .date-picker-footer {
+  background: #0f172a;
+  border-color: #334155;
+}
+</style>
+
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Profile Header -->
+      <div class="card shadow-lg border-0 mb-4">
+        <div class="card-body p-5">
+          <div class="d-flex align-items-center">
+            <div class="bg-gradient-primary text-white rounded-circle d-flex align-items-center justify-content-center me-4" style="width: 80px; height: 80px;">
+              <i class="fas fa-user fa-2x"></i>
+            </div>
+            <div>
+              <h2 class="text-gradient mb-2"><%- __('my_profile') %></h2>
+              <p class="text-muted mb-0"><%- __('manage_profile_info') %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Completion Alert -->
+      <% if (profile && !profile.completionStatus.isComplete) { %>
+      <div class="alert alert-warning shadow-lg border-0 mb-4" role="alert">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+          <div>
+            <h6 class="alert-heading mb-1"><%- __('complete_your_profile') || 'Complete Your Profile' %></h6>
+            <p class="mb-0 small">
+              <%- __('profile_required_message') || 'Please fill in all required fields marked with * to start shopping' %>
+              <% if (profile.completionStatus.completionPercentage > 0) { %>
+                (<%= profile.completionStatus.completionPercentage %>% complete)
+              <% } %>
+            </p>
+          </div>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Profile Form -->
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-edit me-2"></i><%- __('edit_profile') %>
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <p class="text-muted mb-4">
+            <i class="fas fa-info-circle me-1"></i>
+            Fields marked with <span class="text-danger">*</span> are required for shopping
+          </p>
+          <form method="POST" action="/profile<%= typeof redirect !== 'undefined' && redirect ? '?redirect=' + encodeURIComponent(redirect) : '' %>">
+            <!-- Personal Information -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="text-primary fw-bold mb-3">
+                  <i class="fas fa-user me-2"></i><%- __('personal_information') %>
+                </h6>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="firstName" class="form-label"><%- __('first_name') %> <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="firstName" name="firstName"
+                       value="<%= profile && profile.personalInfo.firstName || '' %>" placeholder="<%- __('enter_first_name') %>" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="lastName" class="form-label"><%- __('last_name') %> <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="lastName" name="lastName"
+                       value="<%= profile && profile.personalInfo.lastName || '' %>" placeholder="<%- __('enter_last_name') %>" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="email" class="form-label"><%- __('email') %></label>
+                <input type="email" class="form-control" id="email" name="email"
+                       value="<%= user.email %>" required placeholder="<%- __('enter_email') %>" readonly>
+                <small class="text-muted">Email cannot be changed</small>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="phone" class="form-label"><%- __('phone') %> <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" id="phone" name="phone"
+                       value="<%= profile && profile.personalInfo.phone || '' %>" placeholder="<%- __('enter_phone') %>" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="dateOfBirth" class="form-label"><%- __('date_of_birth') %></label>
+                <div class="date-picker-wrapper">
+                  <div class="date-picker-input" id="datePickerInput">
+                    <i class="fas fa-calendar-alt date-icon"></i>
+                    <span class="date-display" id="dateDisplay">Select date</span>
+                    <i class="fas fa-chevron-down date-arrow"></i>
+                  </div>
+                  <input type="hidden" id="dateOfBirth" name="dateOfBirth" 
+                         value="<%= profile && profile.personalInfo.dateOfBirth ? profile.personalInfo.dateOfBirth.toISOString().split('T')[0] : '' %>">
+                  <div class="date-picker-dropdown" id="datePickerDropdown">
+                    <div class="date-picker-header">
+                      <button type="button" class="date-nav-btn" id="prevMonth">
+                        <i class="fas fa-chevron-left"></i>
+                      </button>
+                      <div class="date-picker-selects">
+                        <select id="monthSelect" class="date-select"></select>
+                        <select id="yearSelect" class="date-select"></select>
+                      </div>
+                      <button type="button" class="date-nav-btn" id="nextMonth">
+                        <i class="fas fa-chevron-right"></i>
+                      </button>
+                    </div>
+                    <div class="date-picker-weekdays">
+                      <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div class="date-picker-days" id="datePickerDays"></div>
+                    <div class="date-picker-footer">
+                      <button type="button" class="date-clear-btn" id="clearDate">Clear</button>
+                      <button type="button" class="date-today-btn" id="todayBtn">Today</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="gender" class="form-label"><%- __('gender') %></label>
+                <select class="form-control" id="gender" name="gender">
+                  <option value=""><%- __('select_gender') %></option>
+                  <option value="male" <%= profile && profile.personalInfo.gender === 'male' ? 'selected' : '' %>><%- __('male') %></option>
+                  <option value="female" <%= profile && profile.personalInfo.gender === 'female' ? 'selected' : '' %>><%- __('female') %></option>
+                  <option value="other" <%= profile && profile.personalInfo.gender === 'other' ? 'selected' : '' %>><%- __('other') %></option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Address Information -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="text-primary fw-bold mb-3">
+                  <i class="fas fa-map-marker-alt me-2"></i><%- __('address_information') %>
+                </h6>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="aimag" class="form-label">Аймаг/Хот <span class="text-danger">*</span></label>
+                <select class="form-control" id="aimag" name="aimag" required>
+                  <option value="">Аймаг/хот сонгоно уу</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="duuregSum" class="form-label"><span id="duuregSumLabel">Дүүрэг/Сум</span> <span class="text-danger">*</span></label>
+                <select class="form-control" id="duuregSum" name="duuregSum" required disabled>
+                  <option value="">Эхлээд аймаг сонгоно уу</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="horoo" class="form-label"><span id="horooLabel">Хороо</span> <span class="text-danger">*</span></label>
+                <select class="form-control" id="horoo" name="horoo" required disabled>
+                  <option value="">Эхлээд дүүрэг сонгоно уу</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="detailedAddress" class="form-label">Дэлгэрэнгүй хаяг</label>
+                <textarea class="form-control" id="detailedAddress" name="detailedAddress" rows="3"
+                          placeholder="Байр, орц, тоот гэх мэт дэлгэрэнгүй мэдээлэл"><%= profile && profile.address && profile.address.detailedAddress ? profile.address.detailedAddress : '' %></textarea>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="zipCode" class="form-label">Шуудангийн индекс</label>
+                <input type="text" class="form-control" id="zipCode" name="zipCode" maxlength="10"
+                       value="<%= profile && profile.address && profile.address.zipCode ? profile.address.zipCode : '' %>"
+                       placeholder="Шуудангийн индекс">
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex gap-3 justify-content-end">
+                  <a href="/shop" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i><%- __('cancel') %>
+                  </a>
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i><%- __('save_changes') %>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Account Information -->
+      <div class="card shadow-lg border-0 mt-4">
+        <div class="card-header bg-light">
+          <h6 class="mb-0 text-muted">
+            <i class="fas fa-info-circle me-2"></i><%- __('account_information') %>
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <small class="text-muted d-block"><%- __('username') %></small>
+              <strong><%= user.username %></strong>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted d-block"><%- __('member_since') %></small>
+              <strong><%= user.createdAt ? user.createdAt.toLocaleDateString() : 'N/A' %></strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ==================== Custom Date Picker ====================
+    const datePickerInput = document.getElementById('datePickerInput');
+    const datePickerDropdown = document.getElementById('datePickerDropdown');
+    const dateDisplay = document.getElementById('dateDisplay');
+    const dateOfBirthInput = document.getElementById('dateOfBirth');
+    const monthSelect = document.getElementById('monthSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    const datePickerDays = document.getElementById('datePickerDays');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const clearDateBtn = document.getElementById('clearDate');
+    const todayBtn = document.getElementById('todayBtn');
+    
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    let currentDate = new Date();
+    let selectedDate = null;
+    
+    // Initialize with existing value
+    if (dateOfBirthInput.value) {
+        selectedDate = new Date(dateOfBirthInput.value);
+        currentDate = new Date(selectedDate);
+        updateDateDisplay();
+    }
+    
+    // Populate month and year selects
+    function populateSelects() {
+        monthSelect.innerHTML = months.map((month, i) => 
+            `<option value="${i}" ${currentDate.getMonth() === i ? 'selected' : ''}>${month}</option>`
+        ).join('');
+        
+        const currentYear = new Date().getFullYear();
+        const startYear = currentYear - 100;
+        yearSelect.innerHTML = '';
+        for (let y = currentYear; y >= startYear; y--) {
+            const option = document.createElement('option');
+            option.value = y;
+            option.textContent = y;
+            if (currentDate.getFullYear() === y) option.selected = true;
+            yearSelect.appendChild(option);
+        }
+    }
+    
+    // Render calendar days
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startingDay = firstDay.getDay();
+        const totalDays = lastDay.getDate();
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let html = '';
+        
+        // Previous month days
+        const prevMonthLastDay = new Date(year, month, 0).getDate();
+        for (let i = startingDay - 1; i >= 0; i--) {
+            const day = prevMonthLastDay - i;
+            html += `<button type="button" class="date-day other-month" data-date="${year}-${month - 1}-${day}">${day}</button>`;
+        }
+        
+        // Current month days
+        for (let day = 1; day <= totalDays; day++) {
+            const date = new Date(year, month, day);
+            const isToday = date.getTime() === today.getTime();
+            const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+            const isFuture = date > today;
+            
+            let classes = 'date-day';
+            if (isToday) classes += ' today';
+            if (isSelected) classes += ' selected';
+            if (isFuture) classes += ' disabled';
+            
+            html += `<button type="button" class="${classes}" data-date="${year}-${month + 1}-${day}" ${isFuture ? 'disabled' : ''}>${day}</button>`;
+        }
+        
+        // Next month days
+        const remainingDays = 42 - (startingDay + totalDays);
+        for (let day = 1; day <= remainingDays; day++) {
+            html += `<button type="button" class="date-day other-month disabled" disabled>${day}</button>`;
+        }
+        
+        datePickerDays.innerHTML = html;
+        populateSelects();
+    }
+    
+    // Update display
+    function updateDateDisplay() {
+        if (selectedDate) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            dateDisplay.textContent = selectedDate.toLocaleDateString('en-US', options);
+            dateDisplay.classList.add('has-value');
+        } else {
+            dateDisplay.textContent = 'Select date';
+            dateDisplay.classList.remove('has-value');
+        }
+    }
+    
+    // Toggle dropdown
+    datePickerInput.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = datePickerDropdown.classList.contains('show');
+        if (isOpen) {
+            closeDatePicker();
+        } else {
+            datePickerDropdown.classList.add('show');
+            datePickerInput.classList.add('active');
+            renderCalendar();
+        }
+    });
+    
+    function closeDatePicker() {
+        datePickerDropdown.classList.remove('show');
+        datePickerInput.classList.remove('active');
+    }
+    
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (!datePickerDropdown.contains(e.target) && !datePickerInput.contains(e.target)) {
+            closeDatePicker();
+        }
+    });
+    
+    // Day selection
+    datePickerDays.addEventListener('click', function(e) {
+        const dayBtn = e.target.closest('.date-day');
+        if (!dayBtn || dayBtn.disabled || dayBtn.classList.contains('disabled')) return;
+        
+        const [year, month, day] = dayBtn.dataset.date.split('-').map(Number);
+        selectedDate = new Date(year, month - 1, day);
+        currentDate = new Date(selectedDate);
+        
+        // Format for input
+        const formattedDate = selectedDate.toISOString().split('T')[0];
+        dateOfBirthInput.value = formattedDate;
+        
+        updateDateDisplay();
+        renderCalendar();
+        
+        // Close after short delay for visual feedback
+        setTimeout(closeDatePicker, 200);
+    });
+    
+    // Navigation
+    prevMonthBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+    });
+    
+    nextMonthBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+    });
+    
+    // Month/Year select changes
+    monthSelect.addEventListener('change', function(e) {
+        e.stopPropagation();
+        currentDate.setMonth(parseInt(this.value));
+        renderCalendar();
+    });
+    
+    yearSelect.addEventListener('change', function(e) {
+        e.stopPropagation();
+        currentDate.setFullYear(parseInt(this.value));
+        renderCalendar();
+    });
+    
+    // Clear button
+    clearDateBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        selectedDate = null;
+        dateOfBirthInput.value = '';
+        currentDate = new Date();
+        updateDateDisplay();
+        renderCalendar();
+        closeDatePicker();
+    });
+    
+    // Today button (disabled for DOB since can't be born today, but keeping for UX)
+    todayBtn.style.display = 'none'; // Hide for date of birth
+    
+    // Initial render
+    renderCalendar();
+    
+    // ==================== Address Selects ====================
+    const aimagSelect = document.getElementById('aimag');
+    const duuregSumSelect = document.getElementById('duuregSum');
+    const horooSelect = document.getElementById('horoo');
+    const duuregSumLabel = document.getElementById('duuregSumLabel');
+    const horooLabel = document.getElementById('horooLabel');
+    
+    // Store current values for initialization
+    const currentAimag = '<%= profile && profile.address && profile.address.aimag ? profile.address.aimag : "" %>';
+    const currentDuuregSum = '<%= profile && profile.address && profile.address.duuregSum ? profile.address.duuregSum : "" %>';
+    const currentHoroo = '<%= profile && profile.address && profile.address.horoo ? profile.address.horoo : "" %>';
+    
+    // Load aimags on page load
+    loadAimags();
+    
+    // Event listeners
+    aimagSelect.addEventListener('change', function() {
+        const selectedAimag = this.value;
+        if (selectedAimag) {
+            loadDistrictsOrSums(selectedAimag);
+            resetHorooSelect();
+        } else {
+            resetDistrictSumSelect();
+            resetHorooSelect();
+        }
+    });
+    
+    duuregSumSelect.addEventListener('change', function() {
+        const selectedAimag = aimagSelect.value;
+        const selectedDistrict = this.value;
+        if (selectedAimag === 'Улаанбаатар хот' && selectedDistrict) {
+            loadHoroos(selectedAimag, selectedDistrict);
+        } else {
+            resetHorooSelect();
+            // For aimags, horoo is not needed, so hide it
+            if (selectedAimag && selectedAimag !== 'Улаанбаатар хот') {
+                horooSelect.parentElement.style.display = 'none';
+                horooSelect.removeAttribute('required');
+            }
+        }
+    });
+    
+    async function loadAimags() {
+        try {
+            const response = await fetch('/api/aimags');
+            const data = await response.json();
+            
+            if (data.success) {
+                aimagSelect.innerHTML = '<option value="">Аймаг/хот сонгоно уу</option>';
+                data.aimags.forEach(aimag => {
+                    const option = document.createElement('option');
+                    option.value = aimag;
+                    option.textContent = aimag;
+                    if (aimag === currentAimag) {
+                        option.selected = true;
+                    }
+                    aimagSelect.appendChild(option);
+                });
+                
+                // If there's a current aimag, load its districts/sums
+                if (currentAimag) {
+                    await loadDistrictsOrSums(currentAimag);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading aimags:', error);
+            showAlert('Аймгийн жагсаалт ачаалахад алдаа гарлаа', 'danger');
+        }
+    }
+    
+    async function loadDistrictsOrSums(aimag) {
+        try {
+            const response = await fetch(`/api/districts-sums/${encodeURIComponent(aimag)}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                duuregSumSelect.innerHTML = '';
+                duuregSumSelect.disabled = false;
+                
+                if (data.type === 'districts') {
+                    duuregSumLabel.textContent = 'Дүүрэг';
+                    horooLabel.textContent = 'Хороо';
+                    horooSelect.parentElement.style.display = 'block';
+                    horooSelect.setAttribute('required', 'required');
+                    duuregSumSelect.innerHTML = '<option value="">Дүүрэг сонгоно уу</option>';
+                } else {
+                    duuregSumLabel.textContent = 'Сум';
+                    horooSelect.parentElement.style.display = 'none';
+                    horooSelect.removeAttribute('required');
+                    duuregSumSelect.innerHTML = '<option value="">Сум сонгоно уу</option>';
+                }
+                
+                data.data.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item;
+                    if (item === currentDuuregSum) {
+                        option.selected = true;
+                    }
+                    duuregSumSelect.appendChild(option);
+                });
+                
+                // If there's a current district and this is UB, load horoos
+                if (currentDuuregSum && aimag === 'Улаанбаатар хот') {
+                    await loadHoroos(aimag, currentDuuregSum);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading districts/sums:', error);
+            showAlert('Дүүрэг/сумын жагсаалт ачаалахад алдаа гарлаа', 'danger');
+        }
+    }
+    
+    async function loadHoroos(aimag, district) {
+        try {
+            const response = await fetch(`/api/horoos/${encodeURIComponent(aimag)}/${encodeURIComponent(district)}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                horooSelect.innerHTML = '<option value="">Хороо сонгоно уу</option>';
+                horooSelect.disabled = false;
+                
+                data.horoos.forEach(horoo => {
+                    const option = document.createElement('option');
+                    option.value = horoo;
+                    option.textContent = horoo;
+                    if (horoo === currentHoroo) {
+                        option.selected = true;
+                    }
+                    horooSelect.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading horoos:', error);
+            showAlert('Хороонуудын жагсаалт ачаалахад алдаа гарлаа', 'danger');
+        }
+    }
+    
+    function resetDistrictSumSelect() {
+        duuregSumSelect.innerHTML = '<option value="">Эхлээд аймаг сонгоно уу</option>';
+        duuregSumSelect.disabled = true;
+        duuregSumLabel.textContent = 'Дүүрэг/Сум';
+    }
+    
+    function resetHorooSelect() {
+        horooSelect.innerHTML = '<option value="">Эхлээд дүүрэг сонгоно уу</option>';
+        horooSelect.disabled = true;
+        horooSelect.parentElement.style.display = 'block';
+        horooSelect.setAttribute('required', 'required');
+    }
+    
+    function showAlert(message, type) {
+        // Create alert element
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        // Insert at the top of the form
+        const form = document.querySelector('form');
+        form.insertBefore(alertDiv, form.firstChild);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+});
+</script>
+
+<%- include('include/footer') %>

@@ -1,0 +1,254 @@
+<%- include('../include/admin-header') %>
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3"><i class="fas fa-chart-line me-2"></i>Income Analytics</h2>
+            <p class="text-muted">Track your revenue and product performance</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Revenue
+                            </div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">$<%= totalRevenue %></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-3x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Orders
+                            </div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800"><%= totalOrders %></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-3x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <!-- Monthly Revenue Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Monthly Revenue</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyRevenueChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Revenue Chart -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top Products</h6>
+                </div>
+                <div class="card-body">
+                    <% if (productData && productData.length > 0) { %>
+                        <% productData.slice(0, 5).forEach(product => { %>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="font-weight-bold"><%= product.product.substring(0, 20) %>...</small>
+                                    <small class="text-muted">$<%= product.revenue %></small>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-success" 
+                                         role="progressbar" 
+                                         style="width: <%= (parseFloat(product.revenue) / parseFloat(totalRevenue) * 100).toFixed(0) %>%"
+                                         aria-valuenow="<%= product.revenue %>" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="<%= totalRevenue %>">
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <p class="text-muted text-center">No sales data yet</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Revenue Chart -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Daily Revenue (Last 30 Days)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyRevenueChart" height="50"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Revenue Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Revenue by Product</h6>
+                </div>
+                <div class="card-body">
+                    <% if (productData && productData.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Product Name</th>
+                                        <th>Revenue</th>
+                                        <th>% of Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% productData.forEach((product, index) => { %>
+                                        <tr>
+                                            <td><strong>#<%= index + 1 %></strong></td>
+                                            <td><%= product.product %></td>
+                                            <td><strong>$<%= product.revenue %></strong></td>
+                                            <td>
+                                                <span class="badge badge-success">
+                                                    <%= (parseFloat(product.revenue) / parseFloat(totalRevenue) * 100).toFixed(1) %>%
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <p class="text-muted text-center py-4">No sales data available yet</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+    // Monthly Revenue Chart
+    const monthlyData = <%- JSON.stringify(monthlyData) %>;
+    const monthlyLabels = monthlyData.map(d => d.month);
+    const monthlyRevenues = monthlyData.map(d => parseFloat(d.revenue));
+
+    const monthlyCtx = document.getElementById('monthlyRevenueChart').getContext('2d');
+    new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: 'Revenue ($)',
+                data: monthlyRevenues,
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Revenue: $' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Daily Revenue Chart
+    const dailyData = <%- JSON.stringify(dailyData) %>;
+    const dailyLabels = dailyData.slice(-30).map(d => d.date);
+    const dailyRevenues = dailyData.slice(-30).map(d => parseFloat(d.revenue));
+
+    const dailyCtx = document.getElementById('dailyRevenueChart').getContext('2d');
+    new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: dailyLabels,
+            datasets: [{
+                label: 'Daily Revenue ($)',
+                data: dailyRevenues,
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Revenue: $' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<%- include('../include/admin-footer') %>
