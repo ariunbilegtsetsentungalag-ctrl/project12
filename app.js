@@ -62,6 +62,9 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 // Handle favicon requests to prevent 404 errors
 app.get('/favicon.ico', (req, res) => res.status(204).end())
 
+// Handle Vercel internal paths (analytics, insights) to prevent 404 errors
+app.get('/_vercel/*', (req, res) => res.status(204).end())
+
 // Basic rate limit (adjust as needed)
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 })
 app.use(limiter)
