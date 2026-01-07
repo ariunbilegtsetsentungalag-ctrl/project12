@@ -52,11 +52,48 @@
     .navbar-toggler {
       margin-left: auto !important;
       position: relative;
-      z-index: 999;
+      z-index: 1050;
+      border: 2px solid rgba(255,255,255,0.3) !important;
+      padding: 8px 12px;
     }
     
-    /* Mobile responsive adjustments */
+    .navbar-toggler:focus {
+      box-shadow: none;
+      outline: none;
+    }
+    
+    /* Mobile navbar collapse */
     @media (max-width: 991.98px) {
+      .navbar-collapse {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 15px;
+        border-radius: 0 0 15px 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        z-index: 1040;
+      }
+      
+      .navbar-collapse.collapsing {
+        transition: height 0.3s ease;
+      }
+      
+      .navbar-collapse .navbar-nav {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .navbar-collapse .nav-item {
+        margin: 5px 0;
+      }
+      
+      .navbar-collapse .nav-link {
+        padding: 12px 15px !important;
+        border-radius: 8px;
+      }
+      
       .navbar-brand {
         position: relative !important;
         left: auto !important;
