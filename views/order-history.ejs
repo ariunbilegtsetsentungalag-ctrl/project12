@@ -316,6 +316,77 @@
           </div>
           <% } %>
 
+          <!-- Payment Information -->
+          <div class="card-body border-top" style="background: linear-gradient(135deg, <%= order.paymentStatus === 'paid' ? '#d1fae5' : '#fef9c3' %> 0%, <%= order.paymentStatus === 'paid' ? '#a7f3d0' : '#fef08a' %> 100%);">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h6 class="mb-2 <%= order.paymentStatus === 'paid' ? 'text-success' : 'text-warning' %>">
+                  <i class="fas fa-credit-card me-2"></i><%- __('payment_info') || 'Payment Information' %>
+                </h6>
+                <div class="row">
+                  <div class="col-sm-6">
+                    <small class="text-muted d-block"><%- __('payment_status') || 'Payment Status' %>:</small>
+                    <% if (order.paymentStatus === 'paid') { %>
+                      <span class="badge bg-success"><i class="fas fa-check me-1"></i>Paid</span>
+                    <% } else { %>
+                      <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Pending</span>
+                    <% } %>
+                  </div>
+                  <% if (order.paymentCode && order.paymentStatus !== 'paid') { %>
+                  <div class="col-sm-6">
+                    <small class="text-muted d-block"><%- __('payment_code') || 'Payment Code' %>:</small>
+                    <div class="d-flex align-items-center gap-2">
+                      <code class="fs-5 fw-bold text-primary bg-white px-2 py-1 rounded" id="paymentCode-<%= order._id %>"><%= order.paymentCode %></code>
+                      <button class="btn btn-sm btn-outline-primary" onclick="copyPaymentCode('<%= order.paymentCode %>', this)">
+                        <i class="fas fa-copy"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <% } %>
+                </div>
+                <% if (order.paymentStatus !== 'paid') { %>
+                <div class="mt-2 p-2 bg-white rounded border">
+                  <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    <%- __('payment_instructions') || 'Transfer' %> <strong class="text-primary">$<%= order.totalAmount.toFixed(2) %></strong> 
+                    <%- __('and_include_code') || 'and include code' %> <strong class="text-primary"><%= order.paymentCode %></strong> 
+                    <%- __('in_utga_field') || 'in the "Utga" (reference) field of your bank transfer.' %>
+                  </small>
+                </div>
+                <% } %>
+                <% if (order.paymentDetails && order.paymentDetails.receivedAt) { %>
+                <div class="mt-2">
+                  <small class="text-muted d-block"><%- __('paid_on') || 'Paid On' %>:</small>
+                  <strong class="text-success">
+                    <%= new Date(order.paymentDetails.receivedAt).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  </strong>
+                  <% if (order.paymentDetails.bankName) { %>
+                    <span class="badge bg-light text-dark ms-2"><%= order.paymentDetails.bankName %></span>
+                  <% } %>
+                </div>
+                <% } %>
+              </div>
+              <div class="col-md-4 text-end">
+                <% if (order.paymentStatus === 'paid') { %>
+                  <div class="text-success">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <div class="small fw-bold">Payment Confirmed!</div>
+                  </div>
+                <% } else { %>
+                  <div class="text-warning">
+                    <i class="fas fa-hourglass-half fa-2x mb-2"></i>
+                    <div class="small fw-bold">Awaiting Payment</div>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
           <!-- Order Actions -->
           <div class="card-footer bg-transparent">
             <div class="d-flex justify-content-between align-items-center">
@@ -537,5 +608,22 @@
   }
 </style>
 
+<script>
+function copyPaymentCode(code, button) {
+  navigator.clipboard.writeText(code).then(() => {
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check text-success"></i>';
+    button.classList.add('btn-success');
+    button.classList.remove('btn-outline-primary');
+    setTimeout(() => {
+      button.innerHTML = originalHTML;
+      button.classList.remove('btn-success');
+      button.classList.add('btn-outline-primary');
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+  });
+}
+</script>
 
 <%- include('include/footer') %>

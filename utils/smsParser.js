@@ -1,150 +1,152 @@
 /**
- * SMS Parser for Mongolian Banks
- * Automatically extracts payment info from bank SMS messages
+ * SMS Parser for Mongolian Bank Payment Notifications
+ * 
+ * Parses incoming SMS from Mongolian banks to extract:
+ * - Amount (from "X dungeer" or "X төгрөг")
+ * - Payment code/reference (from "Utga:" field)
+ * - Bank name
+ * - Date
+ * 
+ * Example SMS format:
+ * "210*****82 dansand 2,000.00 dungeer orlogiin guilgee hiigdlee. Ognoo: 2026-01-07, Utga: ORD-A7X9 Uldegdel: 183,055.09"
  */
 
-const bankPatterns = {
-    // Khan Bank patterns
-    khanBank: {
-        incoming: [
-            /\+([\d,\.]+)\s*MNT.*?(?:from|аас)\s*([A-Za-zА-Яа-яөүӨҮ\s]+)/i,
-            /Орлого[:\s]*([\d,\.]+)\s*₮.*?Илгээгч[:\s]*([A-Za-zА-Яа-яөүӨҮ\s]+)/i,
-            /received?\s*([\d,\.]+)\s*MNT/i,
-            /\+([\d,\.]+)\s*₮/i
-        ],
-        transactionId: /(?:Гүйлгээ|Txn|Trans)[:\s#]*([A-Z0-9]+)/i
-    },
-    // Golomt Bank patterns
-    golomtBank: {
-        incoming: [
-            /Орлого[:\s]*([\d,\.]+)/i,
-            /\+([\d,\.]+)\s*₮/i
-        ],
-        transactionId: /(?:Лавлах|Ref)[:\s#]*([A-Z0-9]+)/i
-    },
-    // TDB (Trade and Development Bank) patterns
-    tdbBank: {
-        incoming: [
-            /Орлого[:\s]*([\d,\.]+)\s*₮/i,
-            /Credit[:\s]*([\d,\.]+)/i
-        ],
-        transactionId: /(?:Ref|Reference)[:\s#]*([A-Z0-9]+)/i
-    },
-    // State Bank patterns
-    stateBank: {
-        incoming: [
-            /Орлого[:\s]*([\d,\.]+)/i
-        ],
-        transactionId: /(?:Гүйлгээний дугаар)[:\s#]*([A-Z0-9]+)/i
-    },
-    // Generic patterns (fallback)
-    generic: {
-        incoming: [
-            /\+([\d,]+(?:\.\d{2})?)\s*(?:MNT|₮|tugrik)/i,
-            /(?:received?|орлого|credit)[:\s]*([\d,]+(?:\.\d{2})?)/i,
-            /([\d,]+(?:\.\d{2})?)\s*(?:MNT|₮)\s*(?:орсон|received|credited)/i,
-            /Орлого[:\s]*([\d,\.]+)/i,
-            /\+([\d,\.]+)/i
-        ],
-        transactionId: /(?:Txn|Trans|Ref|Гүйлгээ|Лавлах)[:\s#]*([A-Z0-9]+)/i
-    }
+// Bank detection patterns
+const BANK_PATTERNS = {
+    'Khan Bank': /khan\s*bank|хаан\s*банк|5765|5765\d{4}/i,
+    'Golomt Bank': /golomt|голомт/i,
+    'TDB': /tdb|худалдаа.*хөгжил|худалдаа\s*хогжлийн/i,
+    'XacBank': /xac\s*bank|хас\s*банк/i,
+    'State Bank': /төрийн\s*банк|state\s*bank/i,
+    'Capitron': /capitron|капитрон/i
 };
 
-function parsePaymentSMS(message, senderNumber = '') {
-    if (!message) return null;
-    
-    let amount = null;
-    let transactionId = null;
-    let senderName = null;
-    let bankName = 'Unknown';
+// Amount extraction patterns (Mongolian format uses comma for thousands)
+const AMOUNT_PATTERNS = [
+    // "2,000.00 dungeer" or "2000.00 dungeer" - incoming transaction
+    /(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*dungeer/i,
+    // "2,000.00 төгрөг" format
+    /(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*төгрөг/i,
+    /(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*togrog/i,
+    // Generic amount patterns
+    /(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*MNT/i,
+    // Fallback: any decimal number that looks like currency
+    /орлого[:\s]*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/i,
+    /amount[:\s]*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/i
+];
 
-    // Detect bank from sender number or message content
-    const msgLower = message.toLowerCase();
-    const senderLower = senderNumber.toLowerCase();
-    
-    if (senderLower.includes('khan') || msgLower.includes('khan') || msgLower.includes('хаан')) {
-        bankName = 'Khan Bank';
-    } else if (senderLower.includes('golomt') || msgLower.includes('golomt') || msgLower.includes('голомт')) {
-        bankName = 'Golomt Bank';
-    } else if (senderLower.includes('tdb') || msgLower.includes('tdb') || msgLower.includes('ххб')) {
-        bankName = 'TDB';
-    } else if (msgLower.includes('төрийн банк') || msgLower.includes('state bank')) {
-        bankName = 'State Bank';
-    } else if (msgLower.includes('xac') || msgLower.includes('хас')) {
-        bankName = 'XacBank';
+// Payment code/reference extraction from "Utga:" field
+const PAYMENT_CODE_PATTERNS = [
+    // "Utga: ORD-A7X9" or "Utga: SOME-TEXT"
+    /Utga:\s*([A-Z0-9-]+)/i,
+    // "Утга:" in Cyrillic
+    /Утга:\s*([A-Z0-9-]+)/i,
+    // Reference patterns
+    /ref[:\s]*([A-Z0-9-]+)/i,
+    /reference[:\s]*([A-Z0-9-]+)/i
+];
+
+// Date extraction
+const DATE_PATTERNS = [
+    /Ognoo:\s*(\d{4}-\d{2}-\d{2})/i,
+    /Огноо:\s*(\d{4}-\d{2}-\d{2})/i,
+    /(\d{4}[-\/]\d{2}[-\/]\d{2})/,
+    /(\d{2}[-\/]\d{2}[-\/]\d{4})/
+];
+
+/**
+ * Parse a payment SMS message
+ * @param {string} message - The SMS message text
+ * @param {string} from - The sender phone number or ID
+ * @returns {object} Parsed payment information
+ */
+function parsePaymentSMS(message, from = '') {
+    const result = {
+        isValid: false,
+        isIncoming: false,
+        amount: null,
+        paymentCode: null,
+        bankName: null,
+        date: null,
+        rawMessage: message,
+        from: from
+    };
+
+    if (!message || typeof message !== 'string') {
+        return result;
     }
 
-    // Try all patterns to extract amount
-    const allPatterns = [
-        ...bankPatterns.khanBank.incoming,
-        ...bankPatterns.golomtBank.incoming,
-        ...bankPatterns.tdbBank.incoming,
-        ...bankPatterns.stateBank.incoming,
-        ...bankPatterns.generic.incoming
-    ];
+    // Clean up the message
+    const cleanMessage = message.trim();
 
-    for (const pattern of allPatterns) {
-        const match = message.match(pattern);
-        if (match) {
-            // Amount is usually in first capture group
-            const amountStr = match[1].replace(/,/g, '').replace(/'/g, '');
-            const parsedAmount = parseFloat(amountStr);
-            if (!isNaN(parsedAmount) && parsedAmount > 0) {
-                amount = parsedAmount;
-                
-                // Sender name might be in second capture group
-                if (match[2]) {
-                    senderName = match[2].trim();
-                }
-                break;
-            }
-        }
+    // Check if this is an incoming transaction (орлого/orlog/dungeer)
+    // "dungeer" indicates incoming money in Mongolian
+    const isIncoming = /dungeer|orlog|орлого|received|credited/i.test(cleanMessage);
+    result.isIncoming = isIncoming;
+
+    // If it's an outgoing transaction, we don't want to process it
+    if (/zarlaga|зарлага|debit|sent|paid|payment\s*to/i.test(cleanMessage) && !isIncoming) {
+        return result;
     }
 
-    // Try to extract transaction ID
-    const txnPatterns = [
-        bankPatterns.khanBank.transactionId,
-        bankPatterns.golomtBank.transactionId,
-        bankPatterns.tdbBank.transactionId,
-        bankPatterns.stateBank.transactionId,
-        bankPatterns.generic.transactionId
-    ];
-
-    for (const pattern of txnPatterns) {
-        const match = message.match(pattern);
-        if (match) {
-            transactionId = match[1];
+    // Detect bank
+    for (const [bankName, pattern] of Object.entries(BANK_PATTERNS)) {
+        if (pattern.test(cleanMessage) || pattern.test(from)) {
+            result.bankName = bankName;
             break;
         }
     }
 
-    // Try to extract sender name if not found yet
-    if (!senderName) {
-        const senderPatterns = [
-            /(?:from|аас|Илгээгч|sender)[:\s]*([A-Za-zА-Яа-яөүӨҮЁё\s]{2,30})/i,
-            /([A-ZА-ЯӨҮЁ][a-zа-яөүё]+\s+[A-ZА-ЯӨҮЁ][a-zа-яөүё]+)/  // Name pattern
-        ];
-        
-        for (const pattern of senderPatterns) {
-            const match = message.match(pattern);
-            if (match) {
-                senderName = match[1].trim();
+    // Extract amount
+    for (const pattern of AMOUNT_PATTERNS) {
+        const match = cleanMessage.match(pattern);
+        if (match) {
+            // Remove commas and parse as float
+            const amountStr = match[1].replace(/,/g, '');
+            const amount = parseFloat(amountStr);
+            if (!isNaN(amount) && amount > 0) {
+                result.amount = amount;
                 break;
             }
         }
     }
 
-    if (amount && amount > 0) {
-        return {
-            amount,
-            transactionId,
-            senderName,
-            bankName,
-            isValid: true
-        };
+    // Extract payment code from "Utga:" field
+    for (const pattern of PAYMENT_CODE_PATTERNS) {
+        const match = cleanMessage.match(pattern);
+        if (match) {
+            result.paymentCode = match[1].toUpperCase().trim();
+            break;
+        }
     }
 
-    return null;
+    // Extract date
+    for (const pattern of DATE_PATTERNS) {
+        const match = cleanMessage.match(pattern);
+        if (match) {
+            result.date = match[1];
+            break;
+        }
+    }
+
+    // Mark as valid if we have at least an amount and it's incoming
+    result.isValid = result.isIncoming && result.amount !== null && result.amount > 0;
+
+    return result;
 }
 
-module.exports = { parsePaymentSMS };
+/**
+ * Generate a unique payment code for an order
+ * Format: ORD-XXXX (4 alphanumeric characters)
+ * @returns {string} Unique payment code
+ */
+function generatePaymentCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed confusing chars like 0,O,1,I
+    let code = 'ORD-';
+    for (let i = 0; i < 4; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+module.exports = { parsePaymentSMS, generatePaymentCode };

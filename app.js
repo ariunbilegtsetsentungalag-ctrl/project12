@@ -344,24 +344,35 @@ const Order = require('./models/Order');
 const { parsePaymentSMS } = require('./utils/smsParser');
 
 // SMS Webhook - receives forwarded SMS from phone automatically
-app.post('/api/sms-webhook', async (req, res) => {
+// Supports both POST (body) and GET (query params) for iOS Shortcuts compatibility
+app.post('/api/sms-webhook', handleSmsWebhook);
+app.get('/api/sms-webhook', handleSmsWebhook);
+
+async function handleSmsWebhook(req, res) {
   try {
-    const { from, message, timestamp, apiKey } = req.body;
+    // Support both POST body and GET query params
+    const data = req.method === 'GET' ? req.query : req.body;
+    let { from, message, timestamp, apiKey, data: urlEncodedData } = data;
     
-    // Verify API key for security
-    if (apiKey !== process.env.SMS_WEBHOOK_KEY) {
+    // iOS Shortcuts might send data URL-encoded in a single 'data' param
+    if (urlEncodedData && !message) {
+      message = decodeURIComponent(urlEncodedData);
+    }
+    
+    // Verify API key for security (skip if not set in env for testing)
+    if (process.env.SMS_WEBHOOK_KEY && apiKey !== process.env.SMS_WEBHOOK_KEY) {
       console.log('❌ Unauthorized SMS webhook attempt');
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
     
-    console.log('📱 SMS Received:', { from, message: message?.substring(0, 50) + '...' });
+    console.log('📱 SMS Received:', { from, message: message?.substring(0, 80) + '...' });
     
     // Parse payment info from SMS
     const paymentInfo = parsePaymentSMS(message, from);
     
     // Log the SMS
     const paymentLog = await PaymentLog.create({
-      from,
+      from: from || 'unknown',
       message,
       timestamp: timestamp ? new Date(timestamp) : new Date(),
       parsed: paymentInfo || {},
@@ -371,17 +382,37 @@ app.post('/api/sms-webhook', async (req, res) => {
     if (paymentInfo && paymentInfo.isValid) {
       console.log('💰 Payment detected:', paymentInfo);
       
-      // Find matching pending order by amount (within last 48 hours)
-      const pendingOrders = await Order.find({
-        paymentStatus: 'pending',
-        createdAt: { $gte: new Date(Date.now() - 48 * 60 * 60 * 1000) }
-      }).sort({ createdAt: -1 });
+      let matchedOrder = null;
       
-      // Try to match by exact amount (within 10 MNT tolerance)
-      let matchedOrder = pendingOrders.find(order => {
-        const orderTotal = order.totalAmount || order.subtotal;
-        return Math.abs(orderTotal - paymentInfo.amount) <= 10;
-      });
+      // PRIORITY 1: Match by payment code from "Utga" field (most reliable)
+      if (paymentInfo.paymentCode) {
+        matchedOrder = await Order.findOne({
+          paymentCode: paymentInfo.paymentCode,
+          paymentStatus: 'pending'
+        });
+        
+        if (matchedOrder) {
+          console.log('✅ Matched by payment code:', paymentInfo.paymentCode);
+        }
+      }
+      
+      // PRIORITY 2: If no code match, try matching by exact amount (within last 24 hours)
+      if (!matchedOrder) {
+        const pendingOrders = await Order.find({
+          paymentStatus: 'pending',
+          orderDate: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+        }).sort({ orderDate: -1 });
+        
+        // Match by exact amount (within 10 MNT tolerance)
+        matchedOrder = pendingOrders.find(order => {
+          const orderTotal = order.totalAmount || order.subtotal;
+          return Math.abs(orderTotal - paymentInfo.amount) <= 10;
+        });
+        
+        if (matchedOrder) {
+          console.log('✅ Matched by amount:', paymentInfo.amount);
+        }
+      }
       
       if (matchedOrder) {
         // Update order as paid
@@ -389,9 +420,8 @@ app.post('/api/sms-webhook', async (req, res) => {
         matchedOrder.deliveryStatus = 'Processing';
         matchedOrder.paymentDetails = {
           method: 'bank_transfer',
-          transactionId: paymentInfo.transactionId,
           amount: paymentInfo.amount,
-          senderName: paymentInfo.senderName,
+          paymentCode: paymentInfo.paymentCode,
           bankName: paymentInfo.bankName,
           receivedAt: new Date(),
           rawSMS: message,
@@ -411,7 +441,8 @@ app.post('/api/sms-webhook', async (req, res) => {
           success: true, 
           message: 'Payment verified and order updated',
           orderId: matchedOrder._id,
-          matched: true
+          matched: true,
+          matchedBy: paymentInfo.paymentCode ? 'payment_code' : 'amount'
         });
       } else {
         console.log('⚠️ Payment received but no matching order found');
@@ -429,7 +460,7 @@ app.post('/api/sms-webhook', async (req, res) => {
     console.error('SMS Webhook Error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
-});
+}
 
 // Admin: View payments page
 app.get('/admin/payments', isAuthenticated, isAdmin, async (req, res) => {

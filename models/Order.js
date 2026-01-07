@@ -46,6 +46,13 @@ const orderSchema = new mongoose.Schema({
   trackingNumber: {
     type: String
   },
+  // Unique payment code for bank transfer matching (e.g., "ORD-A7X9")
+  // Customer includes this in their bank transfer "Utga" field
+  paymentCode: {
+    type: String,
+    unique: true,
+    sparse: true  // Allow null values, only enforce uniqueness when set
+  },
   // Payment tracking
   paymentStatus: {
     type: String,
@@ -56,6 +63,7 @@ const orderSchema = new mongoose.Schema({
     method: String,
     transactionId: String,
     amount: Number,
+    paymentCode: String,  // The code extracted from SMS "Utga" field
     senderName: String,
     bankName: String,
     receivedAt: Date,
@@ -73,5 +81,7 @@ const orderSchema = new mongoose.Schema({
 orderSchema.index({ userId: 1, orderDate: -1 });
 orderSchema.index({ orderDate: -1 });
 orderSchema.index({ 'products.productId': 1 });
+orderSchema.index({ paymentCode: 1 });  // For matching SMS payments
+orderSchema.index({ paymentStatus: 1 }); // For filtering pending payments
 
 module.exports = mongoose.model('Order', orderSchema);

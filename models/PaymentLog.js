@@ -15,9 +15,11 @@ const paymentLogSchema = new mongoose.Schema({
     },
     parsed: {
         amount: Number,
-        transactionId: String,
-        senderName: String,
-        bankName: String
+        paymentCode: String,  // Extracted from "Utga:" field
+        bankName: String,
+        date: String,
+        isIncoming: Boolean,
+        isValid: Boolean
     },
     matched: {
         type: Boolean,

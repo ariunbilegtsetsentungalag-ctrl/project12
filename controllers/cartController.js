@@ -3,6 +3,7 @@ const Product = require('../models/Product')
 const PromoCode = require('../models/PromoCode')
 const mongoose = require('mongoose')
 const { asyncHandler } = require('../middleware/errorHandler')
+const { generatePaymentCode } = require('../utils/smsParser')
 
 exports.viewCart = (req, res) => {
   const cart = req.session.cart || { items: [] }
@@ -319,6 +320,14 @@ exports.checkout = async (req, res) => {
     
     // Generate tracking number
     const trackingNumber = 'TRK' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    
+    // Generate unique payment code for bank transfer matching
+    // Customer will include this in their bank transfer "Utga" field
+    let paymentCode = generatePaymentCode();
+    // Ensure uniqueness
+    while (await Order.findOne({ paymentCode })) {
+      paymentCode = generatePaymentCode();
+    }
 
     const order = new Order({
       userId: userObjectId,
@@ -333,7 +342,9 @@ exports.checkout = async (req, res) => {
       totalAmount,
       deliveryStatus: 'Processing',
       estimatedDeliveryDate: estimatedDeliveryDate,
-      trackingNumber: trackingNumber
+      trackingNumber: trackingNumber,
+      paymentCode: paymentCode,
+      paymentStatus: 'pending'
     })
 
     await order.save({ session })
