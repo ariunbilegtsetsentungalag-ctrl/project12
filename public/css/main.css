@@ -873,3 +873,133 @@ input[type="submit"], input[type="button"], input[type="reset"] {
 [data-theme="dark"] .product-name {
   color: var(--text-color) !important;
 }
+
+/* ===============================================
+   MOBILE RESPONSIVE FIXES (iPhone 16 Pro Max: 440px, iPhone 16: 393px)
+   =============================================== */
+
+/* General Mobile Fixes */
+@media (max-width: 480px) {
+  /* Ensure no horizontal overflow */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  /* Container padding */
+  .container, .container-fluid {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+  
+  /* Hero section fixes */
+  .hero-banner {
+    padding: 20px 15px !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+  }
+  
+  .hero-title {
+    font-size: 1.5rem !important;
+  }
+  
+  .hero-subtitle {
+    font-size: 0.9rem !important;
+  }
+  
+  /* Search box mobile fix */
+  .hero-search {
+    max-width: 100% !important;
+    padding: 0 5px !important;
+  }
+  
+  .search-box {
+    padding: 4px 4px 4px 12px !important;
+    border-radius: 30px !important;
+  }
+  
+  .search-box input {
+    font-size: 0.9rem !important;
+    padding: 8px 10px !important;
+  }
+  
+  .search-box button {
+    padding: 8px 15px !important;
+    font-size: 0.85rem !important;
+    border-radius: 25px !important;
+    white-space: nowrap;
+  }
+  
+  /* Product cards */
+  .product-card {
+    margin-bottom: 15px !important;
+  }
+  
+  /* Buttons */
+  .btn {
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  /* Navbar spacing */
+  .navbar {
+    padding: 10px 0 !important;
+  }
+  
+  .navbar-brand {
+    font-size: 1.3rem !important;
+  }
+}
+
+/* iPhone 16 Pro Max specific (430px-440px width) */
+@media (min-width: 420px) and (max-width: 450px) {
+  .container {
+    max-width: 100% !important;
+  }
+  
+  .hero-search {
+    max-width: 95% !important;
+  }
+  
+  .search-box {
+    width: 100% !important;
+  }
+}
+
+/* iPhone 16 specific (390px-400px width) */
+@media (min-width: 385px) and (max-width: 410px) {
+  .container {
+    max-width: 100% !important;
+  }
+  
+  .hero-search {
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+  
+  .search-box {
+    width: 100% !important;
+    justify-content: space-between;
+  }
+  
+  .search-box input {
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+}
+
+/* Safe area insets for notched phones (iPhone X+, iPhone 16) */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .navbar {
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+  }
+  
+  footer {
+    padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+  }
+  
+  .container, .container-fluid {
+    padding-left: max(12px, env(safe-area-inset-left)) !important;
+    padding-right: max(12px, env(safe-area-inset-right)) !important;
+  }
+}
