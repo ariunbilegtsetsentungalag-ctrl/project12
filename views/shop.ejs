@@ -110,7 +110,7 @@
       </a>
     </div>
     <div class="product-carousel">
-      <button class="carousel-btn prev" onclick="scrollCarousel(this, -1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="carousel-btn prev" type="button"><i class="fas fa-chevron-left"></i></button>
       <div class="carousel-track">
         <% featuredProducts.forEach((product, index) => { %>
           <div class="carousel-item-custom">
@@ -118,7 +118,7 @@
           </div>
         <% }) %>
       </div>
-      <button class="carousel-btn next" onclick="scrollCarousel(this, 1)"><i class="fas fa-chevron-right"></i></button>
+      <button class="carousel-btn next" type="button"><i class="fas fa-chevron-right"></i></button>
     </div>
   </section>
   <% } %>
@@ -139,7 +139,7 @@
       </a>
     </div>
     <div class="product-carousel">
-      <button class="carousel-btn prev" onclick="scrollCarousel(this, -1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="carousel-btn prev" type="button"><i class="fas fa-chevron-left"></i></button>
       <div class="carousel-track">
         <% bestSellers.forEach((product, index) => { %>
           <div class="carousel-item-custom">
@@ -147,7 +147,7 @@
           </div>
         <% }) %>
       </div>
-      <button class="carousel-btn next" onclick="scrollCarousel(this, 1)"><i class="fas fa-chevron-right"></i></button>
+      <button class="carousel-btn next" type="button"><i class="fas fa-chevron-right"></i></button>
     </div>
   </section>
   <% } %>
@@ -168,7 +168,7 @@
       </a>
     </div>
     <div class="product-carousel">
-      <button class="carousel-btn prev" onclick="scrollCarousel(this, -1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="carousel-btn prev" type="button"><i class="fas fa-chevron-left"></i></button>
       <div class="carousel-track">
         <% newArrivals.forEach((product, index) => { %>
           <div class="carousel-item-custom">
@@ -176,7 +176,7 @@
           </div>
         <% }) %>
       </div>
-      <button class="carousel-btn next" onclick="scrollCarousel(this, 1)"><i class="fas fa-chevron-right"></i></button>
+      <button class="carousel-btn next" type="button"><i class="fas fa-chevron-right"></i></button>
     </div>
   </section>
   <% } %>
@@ -429,28 +429,34 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 0 50px;
 }
 
 .carousel-track {
   display: flex;
   gap: 20px;
-  overflow-x: auto;
-  scroll-behavior: smooth;
+  overflow-x: scroll;
+  overflow-y: hidden;
   scrollbar-width: none;
   padding: 10px 0;
   flex: 1;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
 }
 .carousel-track::-webkit-scrollbar { display: none; }
 
-.carousel-item-custom { flex: 0 0 280px; }
+.carousel-item-custom { 
+  flex: 0 0 280px;
+  min-width: 280px;
+}
 
 .carousel-btn {
   position: absolute;
-  z-index: 10;
+  z-index: 100;
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  border: none;
+  border: 2px solid #667eea;
   background: white;
   box-shadow: 0 4px 15px rgba(0,0,0,0.15);
   cursor: pointer;
@@ -460,9 +466,10 @@
   transition: all 0.2s;
   color: #374151;
 }
+.carousel-btn * { pointer-events: none; }
 .carousel-btn:hover { background: #667eea; color: white; transform: scale(1.1); }
-.carousel-btn.prev { left: -10px; }
-.carousel-btn.next { right: -10px; }
+.carousel-btn.prev { left: 0; }
+.carousel-btn.next { right: 0; }
 
 /* Product Card Carousel Style */
 .product-card-carousel {
@@ -593,7 +600,8 @@
 /* Mobile Responsive */
 @media (max-width: 991px) {
   .product-grid { grid-template-columns: repeat(3, 1fr); }
-  .carousel-btn { display: none; }
+  .carousel-btn { width: 36px; height: 36px; }
+  .product-carousel { padding: 0 40px; }
 }
 @media (max-width: 767px) {
   .hero-banner { padding: 2rem 1rem; }
@@ -601,11 +609,15 @@
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .carousel-item-custom { flex: 0 0 220px; }
   .section-header { flex-direction: column; align-items: flex-start; }
+  .carousel-btn { width: 32px; height: 32px; font-size: 0.8rem; }
+  .product-carousel { padding: 0 35px; }
 }
 @media (max-width: 575px) {
   .category-pill { padding: 10px 15px; min-width: 75px; }
   .category-pill i { font-size: 1.2rem; }
   .product-card-carousel .card-img-wrapper { height: 150px; }
+  .carousel-btn { width: 28px; height: 28px; font-size: 0.7rem; }
+  .product-carousel { padding: 0 30px; }
 }
 
 /* Dark mode */
@@ -619,11 +631,42 @@
 </style>
 
 <script>
-function scrollCarousel(btn, direction) {
-  const track = btn.parentElement.querySelector('.carousel-track');
-  const scrollAmount = 300;
-  track.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
-}
+// Carousel navigation
+document.addEventListener('DOMContentLoaded', function() {
+  // Get all carousel buttons
+  const carouselBtns = document.querySelectorAll('.carousel-btn');
+  console.log('Found', carouselBtns.length, 'carousel buttons');
+  
+  carouselBtns.forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log('Button clicked:', this.className);
+      
+      const carousel = this.closest('.product-carousel');
+      if (!carousel) {
+        console.error('No carousel found');
+        return;
+      }
+      
+      const track = carousel.querySelector('.carousel-track');
+      if (!track) {
+        console.error('No track found');
+        return;
+      }
+      
+      const direction = this.classList.contains('next') ? 1 : -1;
+      const scrollAmount = 300;
+      const newPosition = track.scrollLeft + (direction * scrollAmount);
+      
+      console.log('Scrolling from', track.scrollLeft, 'to', newPosition);
+      console.log('Track scrollWidth:', track.scrollWidth, 'clientWidth:', track.clientWidth);
+      
+      track.scrollLeft = newPosition;
+    });
+  });
+});
 
 // Search Autocomplete
 (function() {
