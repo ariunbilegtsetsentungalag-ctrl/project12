@@ -56,7 +56,7 @@ const DATE_PATTERNS = [
 
 /**
  * Parse a payment SMS message
- * @param {string} message - The SMS message text
+ * @param {string} message - The SMS message text (may be URL-encoded)
  * @param {string} from - The sender phone number or ID
  * @returns {object} Parsed payment information
  */
@@ -76,8 +76,20 @@ function parsePaymentSMS(message, from = '') {
         return result;
     }
 
-    // Clean up the message
-    const cleanMessage = message.trim();
+    // Try to URL-decode the message (in case it's encoded)
+    let cleanMessage = message.trim();
+    try {
+        // Check if it looks URL-encoded (contains %20, %2C, etc.)
+        if (cleanMessage.includes('%')) {
+            cleanMessage = decodeURIComponent(cleanMessage);
+        }
+    } catch (e) {
+        // If decoding fails, use original message
+        console.log('URL decode failed, using original message');
+    }
+    
+    // Store decoded message
+    result.rawMessage = cleanMessage;
 
     // Check if this is an incoming transaction (орлого/orlog/dungeer)
     // "dungeer" indicates incoming money in Mongolian

@@ -383,38 +383,51 @@ async function handleSmsWebhook(req, res) {
       console.log('💰 Payment detected:', paymentInfo);
       
       let matchedOrder = null;
+      let matchType = null;
       
-      // PRIORITY 1: Match by payment code from "Utga" field (most reliable)
+      // ONLY match if payment code is present in SMS (from "Utga" field)
+      // This prevents wrong orders being marked as paid when amounts are similar
       if (paymentInfo.paymentCode) {
+        // Find order with matching payment code
         matchedOrder = await Order.findOne({
-          paymentCode: paymentInfo.paymentCode,
+          paymentCode: paymentInfo.paymentCode.toUpperCase(),
           paymentStatus: 'pending'
         });
         
         if (matchedOrder) {
-          console.log('✅ Matched by payment code:', paymentInfo.paymentCode);
+          // VERIFY: Amount must also match (within 100 MNT tolerance for fees)
+          const orderTotal = matchedOrder.totalAmount || matchedOrder.subtotal;
+          const amountDiff = Math.abs(orderTotal - paymentInfo.amount);
+          
+          if (amountDiff <= 100) {
+            console.log('✅ Matched by payment code + amount verified:', paymentInfo.paymentCode);
+            matchType = 'payment_code_verified';
+          } else {
+            console.log('⚠️ Payment code matched but amount mismatch:', { 
+              expected: orderTotal, 
+              received: paymentInfo.amount,
+              diff: amountDiff 
+            });
+            // Still match but flag as amount mismatch for review
+            matchType = 'payment_code_amount_mismatch';
+          }
+        } else {
+          console.log('⚠️ Payment code not found in any pending order:', paymentInfo.paymentCode);
         }
-      }
-      
-      // PRIORITY 2: If no code match, try matching by exact amount (within last 24 hours)
-      if (!matchedOrder) {
-        const pendingOrders = await Order.find({
-          paymentStatus: 'pending',
-          orderDate: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-        }).sort({ orderDate: -1 });
+      } else {
+        // NO payment code in SMS - DO NOT auto-match, log for manual review
+        console.log('⚠️ No payment code (Utga) found in SMS - requires manual matching');
         
-        // Match by exact amount (within 10 MNT tolerance)
-        matchedOrder = pendingOrders.find(order => {
-          const orderTotal = order.totalAmount || order.subtotal;
-          return Math.abs(orderTotal - paymentInfo.amount) <= 10;
+        return res.json({ 
+          success: true, 
+          message: 'SMS logged - no payment code found, requires manual review',
+          matched: false,
+          logId: paymentLog._id,
+          note: 'Customer did not include order code in Utga field'
         });
-        
-        if (matchedOrder) {
-          console.log('✅ Matched by amount:', paymentInfo.amount);
-        }
       }
       
-      if (matchedOrder) {
+      if (matchedOrder && matchType) {
         // Update order as paid
         matchedOrder.paymentStatus = 'paid';
         matchedOrder.deliveryStatus = 'Processing';
@@ -425,7 +438,8 @@ async function handleSmsWebhook(req, res) {
           bankName: paymentInfo.bankName,
           receivedAt: new Date(),
           rawSMS: message,
-          verifiedAutomatically: true
+          verifiedAutomatically: true,
+          matchType: matchType
         };
         await matchedOrder.save();
         
@@ -442,10 +456,20 @@ async function handleSmsWebhook(req, res) {
           message: 'Payment verified and order updated',
           orderId: matchedOrder._id,
           matched: true,
-          matchedBy: paymentInfo.paymentCode ? 'payment_code' : 'amount'
+          matchedBy: matchType,
+          paymentCode: paymentInfo.paymentCode
         });
-      } else {
-        console.log('⚠️ Payment received but no matching order found');
+      } else if (paymentInfo.paymentCode) {
+        // Payment code was in SMS but no matching order found
+        console.log('⚠️ Payment code not found:', paymentInfo.paymentCode);
+        return res.json({ 
+          success: true, 
+          message: 'Payment code not found in pending orders',
+          matched: false,
+          logId: paymentLog._id,
+          paymentCode: paymentInfo.paymentCode,
+          note: 'Order may already be paid or code is incorrect'
+        });
       }
     }
     
