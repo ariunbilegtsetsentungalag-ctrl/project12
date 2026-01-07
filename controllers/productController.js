@@ -20,8 +20,8 @@ exports.viewProducts = async (req, res) => {
     const skip = (parseInt(page) - 1) * limit;
     const filter = { isActive: { $ne: false } };
 
-    // If searching or filtering, show traditional grid view
-    const isFiltering = q || (category && category !== 'All') || minPrice || maxPrice;
+    // If searching, filtering, or view=all, show traditional grid view
+    const isFiltering = q || (category && category !== 'All') || minPrice || maxPrice || view === 'all';
 
     // Category filter
     if (category && category.trim() && category !== 'All') {
