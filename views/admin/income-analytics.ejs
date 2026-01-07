@@ -1,4 +1,4 @@
-<%- include('../include/admin-header') %>
+﻿<%- include('../include/admin-header') %>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -76,7 +76,7 @@
                             <div class="stat-icon mb-3">
                                 <i class="fas fa-dollar-sign fa-2x"></i>
                             </div>
-                            <h3>$<%= totalStats.totalRevenue ? totalStats.totalRevenue.toFixed(2) : '0.00' %></h3>
+                            <h3><%= totalStats.totalRevenue ? totalStats.totalRevenue.toLocaleString() : '0.00' %></h3>
                             <p class="mb-0">Total Revenue</p>
                         </div>
                     </div>
@@ -94,7 +94,7 @@
                             <div class="stat-icon mb-3">
                                 <i class="fas fa-calculator fa-2x"></i>
                             </div>
-                            <h3>$<%= totalStats.averageOrderValue ? totalStats.averageOrderValue.toFixed(2) : '0.00' %></h3>
+                            <h3><%= totalStats.averageOrderValue ? totalStats.averageOrderValue.toLocaleString() : '0.00' %></h3>
                             <p class="mb-0">Average Order</p>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
                             <div class="stat-icon mb-3">
                                 <i class="fas fa-calendar-month fa-2x"></i>
                             </div>
-                            <h3>$<%= thisMonthStats.totalRevenue ? thisMonthStats.totalRevenue.toFixed(2) : '0.00' %></h3>
+                            <h3><%= thisMonthStats.totalRevenue ? thisMonthStats.totalRevenue.toLocaleString() : '0.00' %></h3>
                             <p class="mb-0">This Month</p>
                         </div>
                     </div>
@@ -133,7 +133,7 @@
                                                 <small><%= product.totalQuantity %> sold</small>
                                             </div>
                                             <div class="product-revenue">
-                                                $<%= product.totalRevenue.toFixed(2) %>
+                                                <%= product.totalRevenue.toLocaleString() %>
                                             </div>
                                         </li>
                                     <% }) %>
@@ -203,7 +203,7 @@
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toFixed(2);
+                                return '$' + value.toLocaleString();
                             }
                         }
                     }
@@ -255,7 +255,7 @@
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return '$' + value.toFixed(2);
+                                return '$' + value.toLocaleString();
                             }
                         }
                     }

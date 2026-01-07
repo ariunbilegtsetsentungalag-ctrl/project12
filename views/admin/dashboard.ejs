@@ -1,4 +1,4 @@
-<%- include('../include/admin-header') %>
+﻿<%- include('../include/admin-header') %>
 
     <style>
         .stat-card {
@@ -154,7 +154,7 @@
                                             </td>
                                             <td><%= product.name %></td>
                                             <td><span class="badge bg-secondary"><%= product.category %></span></td>
-                                            <td><strong>$<%= product.basePrice.toFixed(2) %></strong></td>
+                                            <td><strong><%= product.basePrice.toLocaleString() %></strong></td>
                                             <td><%= product.createdBy.username %></td>
                                             <td><%= product.createdAt.toLocaleDateString() %></td>
                                             <td>

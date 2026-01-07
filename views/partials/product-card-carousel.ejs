@@ -1,4 +1,4 @@
-<a href="/product/<%= product._id %>" class="text-decoration-none">
+﻿<a href="/product/<%= product._id %>" class="text-decoration-none">
   <div class="product-card-carousel">
     <div class="card-img-wrapper">
       <img src="/images/<%= product.image || 'product1.svg' %>" alt="<%= product.name %>" onerror="this.src='/images/product1.svg'">
@@ -13,7 +13,7 @@
     <div class="card-body">
       <div class="product-category"><%= product.category || 'Product' %></div>
       <h3 class="product-name"><%= product.name %></h3>
-      <div class="product-price">$<%= (product.basePrice || product.price || 0).toFixed(2) %></div>
+      <div class="product-price"><%= (product.basePrice || product.price || 0).toLocaleString() %></div>
       <div class="product-actions" onclick="event.preventDefault(); event.stopPropagation();">
         <button class="btn-add-cart" data-product-id="<%= product._id %>" <%= product.stockQuantity <= 0 ? 'disabled' : '' %>>
           <i class="fas fa-cart-plus me-1"></i>Add

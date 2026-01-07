@@ -1,4 +1,4 @@
-<%- include('../include/admin-header') %>
+﻿<%- include('../include/admin-header') %>
 
 <style>
   .bundle-status-card {
@@ -199,7 +199,7 @@
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Total Revenue
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">$<%= totalRevenue %></div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= totalRevenue %></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -270,7 +270,7 @@
                                     </td>
                                     <td><%= product.name %></td>
                                     <td><span class="badge badge-info"><%= product.category %></span></td>
-                                    <td>$<%= product.basePrice ? product.basePrice.toFixed(2) : '0.00' %></td>
+                                    <td><%= product.basePrice ? product.basePrice.toLocaleString() : '0.00' %></td>
                                     <td>
                                         <% if (product.stockQuantity > 0) { %>
                                             <span class="badge badge-success"><%= product.stockQuantity %> in stock</span>

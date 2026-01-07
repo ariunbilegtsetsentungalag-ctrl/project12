@@ -1,4 +1,4 @@
-<%- include('include/header') %>
+﻿<%- include('include/header') %>
 
 <!-- Page Hero Section -->
 <div class="row mb-4">
@@ -154,7 +154,7 @@
             <!-- Price -->
             <div class="mb-1 mb-md-2">
               <span class="h6 h5-md text-primary fw-bold mb-0">
-                $<%= product.basePrice ? product.basePrice.toFixed(2) : (product.price ? product.price.toFixed(2) : '0.00') %>
+                <%= product.basePrice ? product.basePrice.toLocaleString() : (product.price ? product.price.toLocaleString() : '0.00') %>
               </span>
             </div>
 
@@ -608,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="search-result-name">${highlightMatch(product.name, query)}</div>
                     <div class="search-result-category">${escapeHtml(product.category)}</div>
                 </div>
-                <div class="search-result-price">$${(product.basePrice || product.price || 0).toFixed(2)}</div>
+                <div class="search-result-price">$${(product.basePrice || product.price || 0).toLocaleString()}</div>
             </a>
         `).join('');
         
@@ -817,7 +817,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             <div class="mb-2">
                                 <span class="h5 text-primary fw-bold mb-0">
-                                    $${(product.basePrice || product.price || 0).toFixed(2)}
+                                    $${(product.basePrice || product.price || 0).toLocaleString()}
                                 </span>
                             </div>
 
@@ -977,7 +977,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('quickViewImage').src = `/images/${product.image || 'product1.svg'}`;
                     document.getElementById('quickViewName').textContent = product.name;
                     document.getElementById('quickViewDesc').textContent = product.description || '';
-                    document.getElementById('quickViewPrice').textContent = `$${(product.basePrice || product.price || 0).toFixed(2)}`;
+                    document.getElementById('quickViewPrice').textContent = `$${(product.basePrice || product.price || 0).toLocaleString()}`;
                 }
             }
         } catch (error) {

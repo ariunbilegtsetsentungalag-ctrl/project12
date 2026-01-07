@@ -1,4 +1,4 @@
-<%- include('../include/admin-header') %>
+﻿<%- include('../include/admin-header') %>
 
 <div class="container-fluid py-4">
     <div class="row mb-4">
@@ -58,7 +58,7 @@
                                             </td>
                                             <td><span class="badge badge-info"><%= product.category %></span></td>
                                             <td>
-                                                <strong>$<%= product.basePrice ? product.basePrice.toFixed(2) : '0.00' %></strong>
+                                                <strong><%= product.basePrice ? product.basePrice.toLocaleString() : '0.00' %></strong>
                                                 <% if (product.sizes && product.sizes.length > 0) { %>
                                                     <br><small class="text-muted"><%= product.sizes.length %> sizes</small>
                                                 <% } %>

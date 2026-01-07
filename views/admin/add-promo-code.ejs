@@ -1,4 +1,4 @@
-<%- include('../include/admin-header') %>
+﻿<%- include('../include/admin-header') %>
 
 <style>
         .form-card {
@@ -233,14 +233,14 @@
                     if (type === 'percentage') {
                         previewText = `${value}% off`;
                         if (maxDiscount) {
-                            previewText += ` (max $${maxDiscount.toFixed(2)})`;
+                            previewText += ` (max $${maxDiscount.toLocaleString()})`;
                         }
                     } else {
-                        previewText = `$${value.toFixed(2)} off`;
+                        previewText = `$${value.toLocaleString()} off`;
                     }
                     
                     if (minOrder > 0) {
-                        previewText += ` on orders over $${minOrder.toFixed(2)}`;
+                        previewText += ` on orders over $${minOrder.toLocaleString()}`;
                     }
                     
                     discountPreview.querySelector('.preview-text').textContent = `Preview: ${previewText}`;

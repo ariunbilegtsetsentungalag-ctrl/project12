@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -955,7 +955,7 @@
             <div class="product-info">
                 <h1><%= product.name %></h1>
                 <div class="price-display" id="priceDisplay">
-                    $<%= product.basePrice ? product.basePrice.toFixed(2) : (product.price ? product.price.toFixed(2) : '0.00') %>
+                    <%= product.basePrice ? product.basePrice.toLocaleString() : (product.price ? product.price.toLocaleString() : '0.00') %>
                 </div>
                 
                 <div class="delivery-info mb-3" style="padding: 12px; background-color: var(--bg-secondary); border-radius: 8px; border-left: 4px solid var(--primary-color);">
@@ -1078,7 +1078,7 @@
                          onerror="this.src='/images/product1.svg'">
                     <div class="related-product-name"><%= relProduct.name %></div>
                     <div class="related-product-price">
-                        $<%= relProduct.basePrice ? relProduct.basePrice.toFixed(2) : (relProduct.price ? relProduct.price.toFixed(2) : '0.00') %>
+                        <%= relProduct.basePrice ? relProduct.basePrice.toLocaleString() : (relProduct.price ? relProduct.price.toLocaleString() : '0.00') %>
                     </div>
                     <% if (relProduct.stockQuantity > 0) { %>
                         <div class="related-product-stock">✓ In Stock</div>
@@ -1169,7 +1169,7 @@
             document.getElementById('selectedSize').value = sizeName;
             
             currentPrice = price;
-            document.getElementById('priceDisplay').textContent = '$' + price.toFixed(2);
+            document.getElementById('priceDisplay').textContent = '$' + price.toLocaleString();
         }
 
         function selectColor(colorName, imageSrc, optionElement) {
@@ -1284,7 +1284,7 @@
                 const price = parseFloat(firstSizeBtn.getAttribute('data-price'));
                 if (!isNaN(price)) {
                     currentPrice = price;
-                    document.getElementById('priceDisplay').textContent = '$' + price.toFixed(2);
+                    document.getElementById('priceDisplay').textContent = '$' + price.toLocaleString();
                     console.log('Initial price set to:', price);
                 }
             }

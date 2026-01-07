@@ -1,4 +1,4 @@
-<div class="col-lg-3 col-md-4 col-6 mb-4 product-item fade-in-up" style="animation-delay: <%= (typeof index !== 'undefined' ? index * 0.05 : 0) %>s">
+﻿<div class="col-lg-3 col-md-4 col-6 mb-4 product-item fade-in-up" style="animation-delay: <%= (typeof index !== 'undefined' ? index * 0.05 : 0) %>s">
   <div class="card product-card h-100 <%= (product.stockQuantity <= 0) ? 'out-of-stock' : '' %>">
     <a href="/product/<%= product._id %>" class="text-decoration-none">
       <div class="position-relative overflow-hidden">
@@ -20,7 +20,7 @@
         <%= product.description %>
       </p>
       <div class="mb-2">
-        <span class="h6 text-primary fw-bold">$<%= (product.basePrice || product.price || 0).toFixed(2) %></span>
+        <span class="h6 text-primary fw-bold"><%= (product.basePrice || product.price || 0).toLocaleString() %></span>
       </div>
       <div class="d-flex gap-1">
         <button class="btn btn-primary btn-sm flex-grow-1 quick-add-btn" data-product-id="<%= product._id %>" <%= product.stockQuantity <= 0 ? 'disabled' : '' %>>

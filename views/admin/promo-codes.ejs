@@ -1,4 +1,4 @@
-<%- include('../include/admin-header') %>
+﻿<%- include('../include/admin-header') %>
 
 <style>
         .stat-card {
@@ -148,7 +148,7 @@
                                             <% if (promo.discountType === 'percentage') { %>
                                                 <%= promo.discountValue %>% OFF
                                             <% } else { %>
-                                                $<%= promo.discountValue.toFixed(2) %> OFF
+                                                <%= promo.discountValue.toLocaleString() %> OFF
                                             <% } %>
                                         </span>
                                     </div>
@@ -178,11 +178,11 @@
                                     <div class="col-md-6">
                                         <p class="mb-2"><strong>Description:</strong> <%= promo.description %></p>
                                         <p class="mb-2">
-                                            <strong>Minimum Order:</strong> $<%= promo.minimumOrderAmount.toFixed(2) %>
+                                            <strong>Minimum Order:</strong> <%= promo.minimumOrderAmount.toLocaleString() %>
                                         </p>
                                         <% if (promo.maximumDiscountAmount) { %>
                                             <p class="mb-2">
-                                                <strong>Max Discount:</strong> $<%= promo.maximumDiscountAmount.toFixed(2) %>
+                                                <strong>Max Discount:</strong> <%= promo.maximumDiscountAmount.toLocaleString() %>
                                             </p>
                                         <% } %>
                                     </div>

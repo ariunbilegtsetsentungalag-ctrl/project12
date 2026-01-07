@@ -1,4 +1,4 @@
-<%- include('include/header') %>
+﻿<%- include('include/header') %>
 
 <!-- Page Header -->
 <div class="row mb-4">
@@ -49,7 +49,7 @@
       <div class="card bg-gradient-success text-white">
         <div class="card-body text-center">
           <i class="fas fa-dollar-sign fa-2x mb-2"></i>
-          <h4>$<%= orders.reduce((sum, order) => sum + order.totalAmount, 0).toFixed(2) %></h4>
+          <h4><%= orders.reduce((sum, order) => sum + order.totalAmount, 0).toLocaleString() %></h4>
           <p class="mb-0"><%- __('total_spent') %></p>
         </div>
       </div>
@@ -58,7 +58,7 @@
       <div class="card bg-gradient-secondary text-white">
         <div class="card-body text-center">
           <i class="fas fa-calculator fa-2x mb-2"></i>
-          <h4>$<%= (orders.reduce((sum, order) => sum + order.totalAmount, 0) / orders.length).toFixed(2) %></h4>
+          <h4><%= (orders.reduce((sum, order) => sum + order.totalAmount, 0) / orders.length).toLocaleString() %></h4>
           <p class="mb-0"><%- __('average_order') %></p>
         </div>
       </div>
@@ -90,7 +90,7 @@
                 </small>
               </div>
               <div class="col-md-6 text-end">
-                <div class="h4 mb-1">$<%= order.totalAmount.toFixed(2) %></div>
+                <div class="h4 mb-1"><%= order.totalAmount.toLocaleString() %></div>
                 <% 
                   const status = order.deliveryStatus || 'Processing';
                   let badgeClass, icon;
@@ -147,9 +147,9 @@
                       <td class="text-center">
                         <span class="badge bg-light text-dark"><%= item.quantity %></span>
                       </td>
-                      <td class="text-end">$<%= item.price.toFixed(2) %></td>
+                      <td class="text-end"><%= item.price.toLocaleString() %></td>
                       <td class="text-end fw-bold text-primary">
-                        $<%= (item.price * item.quantity).toFixed(2) %>
+                        <%= (item.price * item.quantity).toLocaleString() %>
                       </td>
                     </tr>
                   <% }) %>
@@ -158,7 +158,7 @@
                   <tr>
                     <td colspan="3" class="text-end fw-bold"><%- __('order_total') %>:</td>
                     <td class="text-end fw-bold h5 text-primary">
-                      $<%= order.totalAmount.toFixed(2) %>
+                      <%= order.totalAmount.toLocaleString() %>
                     </td>
                   </tr>
                 </tfoot>
@@ -348,7 +348,7 @@
                 <div class="mt-2 p-2 bg-white rounded border">
                   <small class="text-muted">
                     <i class="fas fa-info-circle me-1"></i>
-                    <%- __('payment_instructions') || 'Transfer' %> <strong class="text-primary">$<%= order.totalAmount.toFixed(2) %></strong> 
+                    <%- __('payment_instructions') || 'Transfer' %> <strong class="text-primary"><%= order.totalAmount.toLocaleString() %></strong> 
                     <%- __('and_include_code') || 'and include code' %> <strong class="text-primary"><%= order.paymentCode %></strong> 
                     <%- __('in_utga_field') || 'in the "Utga" (reference) field of your bank transfer.' %>
                   </small>

@@ -1,4 +1,4 @@
-<%- include('../include/admin-header') %>
+﻿<%- include('../include/admin-header') %>
 
 <div class="container-fluid py-4">
     <div class="row mb-4">
@@ -18,7 +18,7 @@
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Total Revenue
                             </div>
-                            <div class="h4 mb-0 font-weight-bold text-gray-800">$<%= totalRevenue %></div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800"><%= totalRevenue %></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-dollar-sign fa-3x text-gray-300"></i>
@@ -73,7 +73,7 @@
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <small class="font-weight-bold"><%= product.product.substring(0, 20) %>...</small>
-                                    <small class="text-muted">$<%= product.revenue %></small>
+                                    <small class="text-muted"><%= product.revenue %></small>
                                 </div>
                                 <div class="progress" style="height: 10px;">
                                     <div class="progress-bar bg-success" 
@@ -132,7 +132,7 @@
                                         <tr>
                                             <td><strong>#<%= index + 1 %></strong></td>
                                             <td><%= product.product %></td>
-                                            <td><strong>$<%= product.revenue %></strong></td>
+                                            <td><strong><%= product.revenue %></strong></td>
                                             <td>
                                                 <span class="badge badge-success">
                                                     <%= (parseFloat(product.revenue) / parseFloat(totalRevenue) * 100).toFixed(1) %>%
@@ -182,7 +182,7 @@
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return '$' + value.toFixed(2);
+                            return '$' + value.toLocaleString();
                         }
                     }
                 }
@@ -191,7 +191,7 @@
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return 'Revenue: $' + context.parsed.y.toFixed(2);
+                            return 'Revenue: $' + context.parsed.y.toLocaleString();
                         }
                     }
                 }
@@ -227,7 +227,7 @@
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
-                            return '$' + value.toFixed(2);
+                            return '$' + value.toLocaleString();
                         }
                     }
                 },
@@ -242,7 +242,7 @@
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return 'Revenue: $' + context.parsed.y.toFixed(2);
+                            return 'Revenue: $' + context.parsed.y.toLocaleString();
                         }
                     }
                 }

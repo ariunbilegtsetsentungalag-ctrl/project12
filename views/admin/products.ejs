@@ -1,4 +1,4 @@
-<%- include('../include/admin-header') %>
+﻿<%- include('../include/admin-header') %>
 
 <style>
 
@@ -224,7 +224,7 @@
                                                 <span class="badge bg-secondary"><%= product.category %></span>
                                             </td>
                                             <td>
-                                                <strong>$<%= product.basePrice.toFixed(2) %></strong>
+                                                <strong><%= product.basePrice.toLocaleString() %></strong>
                                                 <% if (product.sizes && product.sizes.length > 0) { %>
                                                     <br><small class="text-muted"><%= product.sizes.length %> sizes</small>
                                                 <% } %>

@@ -1,4 +1,4 @@
-<%- include('include/header') %>
+﻿<%- include('include/header') %>
 <div class="container py-4">
   <div class="row">
     <div class="col-md-12">
@@ -13,7 +13,7 @@
           <img src="/images/<%= p.image || 'product1.svg' %>" class="card-img-top" onerror="this.src='/images/product1.svg'">
           <div class="card-body">
             <h5><%= p.name %></h5>
-            <p>$<%= p.price %></p>
+            <p><%= p.price %></p>
             <a href="/product/<%= p.id %>" class="btn btn-primary btn-sm">View</a>
           </div>
         </div>
