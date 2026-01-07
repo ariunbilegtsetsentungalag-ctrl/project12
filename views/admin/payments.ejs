@@ -400,8 +400,14 @@ function showTab(tabId) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   
   // Show selected tab
-  document.getElementById(tabId).classList.add('active');
-  event.target.classList.add('active');
+  const tabElement = document.getElementById(tabId);
+  if (tabElement) {
+    tabElement.classList.add('active');
+  }
+  // Mark button as active
+  if (event && event.target) {
+    event.target.classList.add('active');
+  }
 }
 
 async function markAsPaid(orderId, amount) {
