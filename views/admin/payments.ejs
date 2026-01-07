@@ -1,0 +1,477 @@
+<%- include('../include/admin-header') %>
+
+<style>
+  .payment-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 15px;
+    overflow: hidden;
+  }
+  .payment-card-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .payment-card-body {
+    padding: 15px 20px;
+  }
+  .payment-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #10b981;
+  }
+  .payment-amount.pending {
+    color: #f59e0b;
+  }
+  .sms-preview {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.85rem;
+    color: #64748b;
+    max-height: 80px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .order-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 15px;
+    margin-bottom: 10px;
+  }
+  .stat-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-box.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+  .stat-box.orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+  .stat-box.red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+  .stat-box h2 { font-size: 2rem; margin: 0; }
+  .stat-box p { margin: 5px 0 0; opacity: 0.9; }
+  
+  .tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #e5e7eb;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  
+  .match-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .match-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+  
+  .delete-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  
+  .mark-paid-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  
+  .webhook-info {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #0ea5e9;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .webhook-url {
+    background: #1e293b;
+    color: #22d3ee;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-family: monospace;
+    word-break: break-all;
+    margin: 10px 0;
+  }
+  
+  .badge-auto { background: #10b981; color: white; }
+  .badge-manual { background: #3b82f6; color: white; }
+  
+  @media (max-width: 767px) {
+    .payment-card-header { flex-direction: column; align-items: flex-start; }
+    .stat-box { padding: 15px; }
+    .stat-box h2 { font-size: 1.5rem; }
+  }
+</style>
+
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h1 class="h3 mb-0"><i class="fas fa-credit-card me-2"></i>Payment Management</h1>
+    <button class="btn btn-primary" onclick="refreshData()">
+      <i class="fas fa-sync-alt me-1"></i>Refresh
+    </button>
+  </div>
+  
+  <!-- Stats Row -->
+  <div class="row mb-4">
+    <div class="col-6 col-md-3 mb-3">
+      <div class="stat-box orange">
+        <h2><%= pendingOrders.length %></h2>
+        <p><i class="fas fa-clock me-1"></i>Pending Orders</p>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="stat-box red">
+        <h2><%= unmatchedPayments.length %></h2>
+        <p><i class="fas fa-envelope me-1"></i>Unmatched SMS</p>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="stat-box green">
+        <h2><%= matchedPayments.length %></h2>
+        <p><i class="fas fa-check-circle me-1"></i>Matched Today</p>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="stat-box">
+        <h2><%= paidOrders.length %></h2>
+        <p><i class="fas fa-money-bill-wave me-1"></i>Recently Paid</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Webhook Setup Info -->
+  <div class="webhook-info">
+    <h5><i class="fas fa-info-circle me-2"></i>SMS Webhook Setup</h5>
+    <p class="mb-2">To automatically receive bank SMS, install "SMS Forwarder" app and configure it to send to:</p>
+    <div class="webhook-url">
+      POST <%= process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://your-site.vercel.app' %>/api/sms-webhook
+    </div>
+    <small class="text-muted">Include <code>apiKey</code> in the request body matching your SMS_WEBHOOK_KEY environment variable.</small>
+  </div>
+  
+  <!-- Tabs -->
+  <div class="tab-buttons">
+    <button class="tab-btn active" onclick="showTab('pending')">
+      <i class="fas fa-clock me-1"></i>Pending Orders (<%= pendingOrders.length %>)
+    </button>
+    <button class="tab-btn" onclick="showTab('unmatched')">
+      <i class="fas fa-envelope-open me-1"></i>Unmatched SMS (<%= unmatchedPayments.length %>)
+    </button>
+    <button class="tab-btn" onclick="showTab('matched')">
+      <i class="fas fa-check-circle me-1"></i>Matched Payments
+    </button>
+  </div>
+  
+  <!-- Pending Orders Tab -->
+  <div id="pending" class="tab-content active">
+    <h4 class="mb-3">Orders Waiting for Payment</h4>
+    <% if (pendingOrders.length === 0) { %>
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i>No pending orders! All payments are up to date.
+      </div>
+    <% } else { %>
+      <div class="row">
+        <% pendingOrders.forEach(order => { %>
+          <div class="col-md-6 col-lg-4">
+            <div class="order-card">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <strong><%= order.userId?.username || 'Unknown User' %></strong>
+                  <br><small class="text-muted"><%= order.userId?.email || '' %></small>
+                </div>
+                <span class="payment-amount pending">
+                  ₮<%= order.totalAmount?.toLocaleString() || order.subtotal?.toLocaleString() %>
+                </span>
+              </div>
+              <div class="mb-2">
+                <small class="text-muted">
+                  <i class="fas fa-calendar me-1"></i>
+                  <%= new Date(order.orderDate || order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                </small>
+                <br>
+                <small class="text-muted">
+                  <i class="fas fa-box me-1"></i>
+                  <%= order.products?.length || 0 %> item(s)
+                </small>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="mark-paid-btn flex-grow-1" onclick="markAsPaid('<%= order._id %>', <%= order.totalAmount || order.subtotal %>)">
+                  <i class="fas fa-check me-1"></i>Mark as Paid
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="viewOrderDetails('<%= order._id %>')">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+  
+  <!-- Unmatched SMS Tab -->
+  <div id="unmatched" class="tab-content">
+    <h4 class="mb-3">Unmatched Payment SMS</h4>
+    <% if (unmatchedPayments.length === 0) { %>
+      <div class="alert alert-info">
+        <i class="fas fa-inbox me-2"></i>No unmatched payment SMS. All payments have been processed.
+      </div>
+    <% } else { %>
+      <% unmatchedPayments.forEach(payment => { %>
+        <div class="payment-card">
+          <div class="payment-card-header">
+            <div>
+              <span class="payment-amount">
+                ₮<%= payment.parsed?.amount?.toLocaleString() || 'Unknown' %>
+              </span>
+              <% if (payment.parsed?.bankName) { %>
+                <span class="badge bg-secondary ms-2"><%= payment.parsed.bankName %></span>
+              <% } %>
+            </div>
+            <div class="d-flex gap-2">
+              <select class="form-select form-select-sm" id="order-select-<%= payment._id %>" style="width: auto;">
+                <option value="">Select order to match...</option>
+                <% pendingOrders.forEach(order => { %>
+                  <option value="<%= order._id %>">
+                    <%= order.userId?.username || 'Unknown' %> - ₮<%= order.totalAmount?.toLocaleString() || order.subtotal?.toLocaleString() %>
+                  </option>
+                <% }) %>
+              </select>
+              <button class="match-btn" onclick="matchPayment('<%= payment._id %>')">
+                <i class="fas fa-link me-1"></i>Match
+              </button>
+              <button class="delete-btn" onclick="deletePaymentLog('<%= payment._id %>')">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          <div class="payment-card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <small class="text-muted d-block mb-1">
+                  <i class="fas fa-phone me-1"></i>From: <%= payment.from %>
+                </small>
+                <small class="text-muted d-block mb-2">
+                  <i class="fas fa-clock me-1"></i>
+                  <%= new Date(payment.timestamp || payment.createdAt).toLocaleString() %>
+                </small>
+                <% if (payment.parsed?.senderName) { %>
+                  <small class="text-muted d-block">
+                    <i class="fas fa-user me-1"></i>Sender: <%= payment.parsed.senderName %>
+                  </small>
+                <% } %>
+                <% if (payment.parsed?.transactionId) { %>
+                  <small class="text-muted d-block">
+                    <i class="fas fa-hashtag me-1"></i>Txn: <%= payment.parsed.transactionId %>
+                  </small>
+                <% } %>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small text-muted">SMS Content:</label>
+                <div class="sms-preview"><%= payment.message %></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+  
+  <!-- Matched Payments Tab -->
+  <div id="matched" class="tab-content">
+    <h4 class="mb-3">Successfully Matched Payments</h4>
+    <% if (matchedPayments.length === 0) { %>
+      <div class="alert alert-info">
+        <i class="fas fa-inbox me-2"></i>No matched payments yet.
+      </div>
+    <% } else { %>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Amount</th>
+              <th>Bank</th>
+              <th>Sender</th>
+              <th>Order</th>
+              <th>Matched</th>
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% matchedPayments.forEach(payment => { %>
+              <tr>
+                <td><strong class="text-success">₮<%= payment.parsed?.amount?.toLocaleString() || '-' %></strong></td>
+                <td><%= payment.parsed?.bankName || '-' %></td>
+                <td><%= payment.parsed?.senderName || '-' %></td>
+                <td>
+                  <% if (payment.matchedOrderId) { %>
+                    <a href="#" onclick="viewOrderDetails('<%= payment.matchedOrderId._id || payment.matchedOrderId %>')">
+                      #<%= (payment.matchedOrderId._id || payment.matchedOrderId).toString().slice(-6) %>
+                    </a>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td><%= new Date(payment.updatedAt || payment.createdAt).toLocaleDateString() %></td>
+                <td>
+                  <% if (payment.matchedAutomatically) { %>
+                    <span class="badge badge-auto">Auto</span>
+                  <% } else { %>
+                    <span class="badge badge-manual">Manual</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Order Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="orderModalBody">
+        <div class="text-center py-4">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(tabId) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  
+  // Show selected tab
+  document.getElementById(tabId).classList.add('active');
+  event.target.classList.add('active');
+}
+
+async function markAsPaid(orderId, amount) {
+  if (!confirm('Mark this order as paid?')) return;
+  
+  try {
+    const res = await fetch('/api/admin/mark-paid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, amount })
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      alert('Order marked as paid!');
+      location.reload();
+    } else {
+      alert('Error: ' + data.message);
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function matchPayment(paymentLogId) {
+  const select = document.getElementById('order-select-' + paymentLogId);
+  const orderId = select.value;
+  
+  if (!orderId) {
+    alert('Please select an order to match');
+    return;
+  }
+  
+  if (!confirm('Match this payment to the selected order?')) return;
+  
+  try {
+    const res = await fetch('/api/admin/match-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentLogId, orderId })
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      alert('Payment matched successfully!');
+      location.reload();
+    } else {
+      alert('Error: ' + data.message);
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function deletePaymentLog(paymentLogId) {
+  if (!confirm('Delete this payment log? This cannot be undone.')) return;
+  
+  try {
+    const res = await fetch('/api/admin/payment-log/' + paymentLogId, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      location.reload();
+    } else {
+      alert('Error: ' + data.message);
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function viewOrderDetails(orderId) {
+  // TODO: Implement order details modal
+  alert('Order ID: ' + orderId);
+}
+
+function refreshData() {
+  location.reload();
+}
+</script>
+
+<%- include('../include/admin-footer') %>

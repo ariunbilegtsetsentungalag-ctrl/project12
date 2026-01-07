@@ -336,6 +336,232 @@ app.get('/admin/db-stats', isAuthenticated, isAdmin, async (req, res) => {
   }
 });
 
+// ============================================
+// PAYMENT MANAGEMENT ROUTES (Admin)
+// ============================================
+const PaymentLog = require('./models/PaymentLog');
+const Order = require('./models/Order');
+const { parsePaymentSMS } = require('./utils/smsParser');
+
+// SMS Webhook - receives forwarded SMS from phone automatically
+app.post('/api/sms-webhook', async (req, res) => {
+  try {
+    const { from, message, timestamp, apiKey } = req.body;
+    
+    // Verify API key for security
+    if (apiKey !== process.env.SMS_WEBHOOK_KEY) {
+      console.log('❌ Unauthorized SMS webhook attempt');
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    
+    console.log('📱 SMS Received:', { from, message: message?.substring(0, 50) + '...' });
+    
+    // Parse payment info from SMS
+    const paymentInfo = parsePaymentSMS(message, from);
+    
+    // Log the SMS
+    const paymentLog = await PaymentLog.create({
+      from,
+      message,
+      timestamp: timestamp ? new Date(timestamp) : new Date(),
+      parsed: paymentInfo || {},
+      matched: false
+    });
+    
+    if (paymentInfo && paymentInfo.isValid) {
+      console.log('💰 Payment detected:', paymentInfo);
+      
+      // Find matching pending order by amount (within last 48 hours)
+      const pendingOrders = await Order.find({
+        paymentStatus: 'pending',
+        createdAt: { $gte: new Date(Date.now() - 48 * 60 * 60 * 1000) }
+      }).sort({ createdAt: -1 });
+      
+      // Try to match by exact amount (within 10 MNT tolerance)
+      let matchedOrder = pendingOrders.find(order => {
+        const orderTotal = order.totalAmount || order.subtotal;
+        return Math.abs(orderTotal - paymentInfo.amount) <= 10;
+      });
+      
+      if (matchedOrder) {
+        // Update order as paid
+        matchedOrder.paymentStatus = 'paid';
+        matchedOrder.deliveryStatus = 'Processing';
+        matchedOrder.paymentDetails = {
+          method: 'bank_transfer',
+          transactionId: paymentInfo.transactionId,
+          amount: paymentInfo.amount,
+          senderName: paymentInfo.senderName,
+          bankName: paymentInfo.bankName,
+          receivedAt: new Date(),
+          rawSMS: message,
+          verifiedAutomatically: true
+        };
+        await matchedOrder.save();
+        
+        // Update payment log
+        paymentLog.matched = true;
+        paymentLog.matchedOrderId = matchedOrder._id;
+        paymentLog.matchedAutomatically = true;
+        await paymentLog.save();
+        
+        console.log('✅ Order automatically marked as paid:', matchedOrder._id);
+        
+        return res.json({ 
+          success: true, 
+          message: 'Payment verified and order updated',
+          orderId: matchedOrder._id,
+          matched: true
+        });
+      } else {
+        console.log('⚠️ Payment received but no matching order found');
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'SMS logged for manual review',
+      matched: false,
+      logId: paymentLog._id
+    });
+    
+  } catch (error) {
+    console.error('SMS Webhook Error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin: View payments page
+app.get('/admin/payments', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const unmatchedPayments = await PaymentLog.find({ matched: false })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    
+    const matchedPayments = await PaymentLog.find({ matched: true })
+      .populate('matchedOrderId')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    
+    const pendingOrders = await Order.find({ paymentStatus: 'pending' })
+      .populate('userId', 'username email')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    
+    const paidOrders = await Order.find({ paymentStatus: 'paid' })
+      .populate('userId', 'username email')
+      .sort({ createdAt: -1 })
+      .limit(20);
+    
+    res.render('admin/payments', {
+      title: 'Payment Management',
+      unmatchedPayments,
+      matchedPayments,
+      pendingOrders,
+      paidOrders
+    });
+  } catch (error) {
+    console.error('Payments page error:', error);
+    req.flash('error', 'Error loading payments');
+    res.redirect('/admin');
+  }
+});
+
+// Admin: Get pending payments API
+app.get('/api/admin/pending-payments', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const logs = await PaymentLog.find({ matched: false })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    
+    const pendingOrders = await Order.find({ paymentStatus: 'pending' })
+      .populate('userId', 'username email')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    
+    res.json({ success: true, payments: logs, pendingOrders });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin: Manually match a payment to an order
+app.post('/api/admin/match-payment', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const { paymentLogId, orderId } = req.body;
+    
+    const log = await PaymentLog.findById(paymentLogId);
+    const order = await Order.findById(orderId);
+    
+    if (!log || !order) {
+      return res.status(404).json({ success: false, message: 'Payment or order not found' });
+    }
+    
+    order.paymentStatus = 'paid';
+    order.deliveryStatus = 'Processing';
+    order.paymentDetails = {
+      method: 'bank_transfer',
+      amount: log.parsed?.amount,
+      senderName: log.parsed?.senderName,
+      bankName: log.parsed?.bankName,
+      transactionId: log.parsed?.transactionId,
+      rawSMS: log.message,
+      receivedAt: log.timestamp,
+      manuallyMatched: true,
+      matchedBy: req.session.user._id
+    };
+    await order.save();
+    
+    log.matched = true;
+    log.matchedOrderId = orderId;
+    log.matchedAutomatically = false;
+    log.matchedBy = req.session.user._id;
+    await log.save();
+    
+    res.json({ success: true, message: 'Payment matched to order successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin: Manually mark order as paid (without SMS)
+app.post('/api/admin/mark-paid', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const { orderId, amount, note } = req.body;
+    
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    
+    order.paymentStatus = 'paid';
+    order.deliveryStatus = 'Processing';
+    order.paymentDetails = {
+      method: 'manual',
+      amount: amount || order.totalAmount,
+      receivedAt: new Date(),
+      manuallyMatched: true,
+      matchedBy: req.session.user._id,
+      rawSMS: note || 'Manually marked as paid by admin'
+    };
+    await order.save();
+    
+    res.json({ success: true, message: 'Order marked as paid' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin: Delete unmatched payment log
+app.delete('/api/admin/payment-log/:id', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    await PaymentLog.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Payment log deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Business Owner Routes
 app.get('/business-owner', isAuthenticated, isBusinessOwner, businessOwnerController.dashboard);
 app.get('/business-owner/buy-bundle', isAuthenticated, isBusinessOwner, businessOwnerController.getBuyBundle);

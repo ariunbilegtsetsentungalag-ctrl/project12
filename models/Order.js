@@ -45,6 +45,27 @@ const orderSchema = new mongoose.Schema({
   },
   trackingNumber: {
     type: String
+  },
+  // Payment tracking
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed', 'refunded'],
+    default: 'pending'
+  },
+  paymentDetails: {
+    method: String,
+    transactionId: String,
+    amount: Number,
+    senderName: String,
+    bankName: String,
+    receivedAt: Date,
+    rawSMS: String,
+    verifiedAutomatically: Boolean,
+    manuallyMatched: Boolean,
+    matchedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
   }
 });
 
