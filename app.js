@@ -27,20 +27,50 @@ const i18n = require('i18n')
 
 const dbURI = process.env.CONNECTION_STRING;
 
-// Optimized MongoDB connection for 2-3x better concurrent user capacity
-mongoose.connect(dbURI, {
-  dbName: 'Ariuka',
-  maxPoolSize: 10, // Maintain up to 10 socket connections
-  serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-  bufferCommands: true // Enable buffering to queue commands until connection is ready (important for serverless)
-})
-  .then(() => {
-    console.log('🚀 Connected to MongoDB Atlas with optimized settings...')
-  })
-  .catch(err => console.error('❌ Could not connect to MongoDB:', err))
+// MongoDB connection with retry logic for serverless (Vercel)
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected) return;
+  
+  try {
+    await mongoose.connect(dbURI, {
+      dbName: 'Ariuka',
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000, // 10 seconds to select server
+      socketTimeoutMS: 45000,
+      bufferCommands: true,
+      connectTimeoutMS: 10000, // 10 seconds to establish connection
+      retryWrites: true,
+      retryReads: true
+    });
+    isConnected = true;
+    console.log('🚀 Connected to MongoDB Atlas');
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err.message);
+    isConnected = false;
+  }
+};
+
+// Initial connection
+connectDB();
+
+// Reconnect on disconnect
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️ MongoDB disconnected, reconnecting...');
+  isConnected = false;
+  connectDB();
+});
 
 const app = express()
+
+// Ensure DB connection before handling requests
+app.use(async (req, res, next) => {
+  if (!isConnected) {
+    await connectDB();
+  }
+  next();
+});
 
 // Security & performance middleware
 app.set('trust proxy', 1)
