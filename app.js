@@ -18,6 +18,7 @@ const adminController = require('./controllers/adminController')
 const adminCategoryController = require('./controllers/adminCategoryController')
 const userController = require('./controllers/userController')
 const businessOwnerController = require('./controllers/businessOwnerController')
+const reviewController = require('./controllers/reviewController')
 const { isAuthenticated, requireCompleteProfile } = require('./middleware/auth')
 const { isAdminOrProductManager, isAdmin, isBusinessOwner } = require('./middleware/adminAuth')
 const { cacheMiddleware, clearCache } = require('./middleware/cache')
@@ -58,9 +59,28 @@ app.use(compression())
 app.use(mongoSanitize())
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 
+// Handle favicon requests to prevent 404 errors
+app.get('/favicon.ico', (req, res) => res.status(204).end())
+
 // Basic rate limit (adjust as needed)
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 })
 app.use(limiter)
+
+// Stricter rate limit for authentication routes (prevent brute force)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 login attempts per 15 minutes
+  message: 'Too many login attempts. Please try again after 15 minutes.',
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+// Stricter rate limit for signup (prevent spam accounts)
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 signups per hour per IP
+  message: 'Too many accounts created. Please try again later.',
+})
 
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
@@ -214,9 +234,9 @@ app.post('/set-language', (req, res) => {
 });
 
 app.get('/login', authController.getLogin);
-app.post('/login', authController.postLogin);
+app.post('/login', authLimiter, authController.postLogin);
 app.get('/signup', authController.getSignup);
-app.post('/signup', authController.postSignup);
+app.post('/signup', signupLimiter, authController.postSignup);
 app.get('/logout', authController.logout);
 
 // Username availability check API
@@ -233,6 +253,7 @@ app.get('/product/:id', cacheMiddleware(300), productController.viewProduct); //
 app.get('/cart', isAuthenticated, requireCompleteProfile, cartController.viewCart);
 const { validateQuantity, validateProductId, cartRateLimit } = require('./middleware/validation');
 app.post('/cart/add', isAuthenticated, requireCompleteProfile, cartRateLimit, validateProductId, validateQuantity, cartController.addToCart);
+app.post('/api/cart/add', isAuthenticated, cartRateLimit, validateProductId, validateQuantity, cartController.addToCartAPI);
 app.post('/cart/update', isAuthenticated, requireCompleteProfile, cartController.updateCartItem);
 app.get('/cart/remove/:id', isAuthenticated, requireCompleteProfile, cartController.removeFromCart);
 app.post('/cart/checkout', isAuthenticated, requireCompleteProfile, cartController.checkout);
@@ -242,6 +263,18 @@ app.get('/order-history', isAuthenticated, cartController.orderHistory);
 app.get('/profile', isAuthenticated, userController.getProfile);
 app.post('/profile', isAuthenticated, userController.updateProfile);
 app.get('/profile-debug', isAuthenticated, userController.getProfileDebug);
+
+// Review Routes
+app.post('/api/reviews', isAuthenticated, reviewController.addReview);
+app.get('/api/reviews/:productId', reviewController.getProductReviews);
+app.post('/api/reviews/:reviewId/reply', isAuthenticated, reviewController.addReply);
+app.post('/api/reviews/:reviewId/like', isAuthenticated, reviewController.likeReview);
+app.post('/api/reviews/:reviewId/dislike', isAuthenticated, reviewController.dislikeReview);
+app.post('/api/reviews/:reviewId/replies/:replyId/like', isAuthenticated, reviewController.likeReply);
+app.post('/api/reviews/:reviewId/replies/:replyId/dislike', isAuthenticated, reviewController.dislikeReply);
+app.delete('/api/reviews/:reviewId', isAuthenticated, reviewController.deleteReview);
+app.put('/api/reviews/:reviewId', isAuthenticated, reviewController.updateReview);
+
 
 // Address API Routes
 app.get('/api/aimags', userController.getAimags);
@@ -274,6 +307,34 @@ app.get('/admin/categories', isAuthenticated, isAdmin, adminCategoryController.v
 app.post('/admin/categories/add', isAuthenticated, isAdmin, adminCategoryController.addCategory);
 app.post('/admin/categories/update/:id', isAuthenticated, isAdmin, adminCategoryController.updateCategory);
 app.get('/admin/categories/delete/:id', isAuthenticated, isAdmin, adminCategoryController.deleteCategory);
+
+// Database stats route (admin only)
+app.get('/admin/db-stats', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const stats = await mongoose.connection.db.stats();
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    
+    // Get document counts for each collection
+    const collectionStats = await Promise.all(
+      collections.map(async (col) => {
+        const count = await mongoose.connection.db.collection(col.name).countDocuments();
+        return { name: col.name, documents: count };
+      })
+    );
+    
+    res.json({
+      database: stats.db,
+      collections: stats.collections,
+      totalDocuments: stats.objects,
+      dataSize: `${(stats.dataSize / 1024).toFixed(2)} KB`,
+      storageSize: `${(stats.storageSize / 1024).toFixed(2)} KB`,
+      indexSize: `${(stats.indexSize / 1024).toFixed(2)} KB`,
+      collectionDetails: collectionStats
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Business Owner Routes
 app.get('/business-owner', isAuthenticated, isBusinessOwner, businessOwnerController.dashboard);

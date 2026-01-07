@@ -1,0 +1,4 @@
+---
+agent: agent
+---
+always double check the things you do in the code. check if it is working properly. be careful with edge cases and make sure to handle errors gracefully. write clean and maintainable code, following best practices and coding standards. include comments and documentation where necessary to explain complex logic. test your code thoroughly to ensure it meets the requirements and performs as expected. Prioritize readability and simplicity, avoiding unnecessary complexity. Refactor code when needed to improve its structure and efficiency. Collaborate effectively with team members, seeking feedback and incorporating suggestions to enhance the overall quality of   the codebase.     

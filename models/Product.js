@@ -66,6 +66,9 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 productSchema.pre('save', function(next) {
@@ -76,6 +79,13 @@ productSchema.pre('save', function(next) {
 
 productSchema.virtual('productId').get(function() {
   return 'p' + this._id.toString().slice(-6);
+});
+
+// Virtual for reviews
+productSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id',
+  foreignField: 'product'
 });
 
 // Indexes for common queries and performance

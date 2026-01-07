@@ -168,6 +168,52 @@
           
           <!-- Delivery Information -->
           <% if (order.deliveryStatus) { %>
+          
+          <!-- Order Progress Tracker -->
+          <div class="card-body border-top" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+            <h6 class="mb-3 text-primary">
+              <i class="fas fa-map-marker-alt me-2"></i>Order Progress
+            </h6>
+            <% 
+              const steps = ['Processing', 'Shipped', 'Delivering', 'Delivered'];
+              const currentStep = steps.indexOf(order.deliveryStatus || 'Processing');
+            %>
+            <div class="order-progress-tracker">
+              <div class="progress-line" style="width: <%= Math.max(0, (currentStep / (steps.length - 1)) * 100) %>%"></div>
+              <% steps.forEach((step, idx) => { %>
+                <div class="progress-step <%= idx <= currentStep ? 'active' : '' %> <%= idx < currentStep ? 'completed' : '' %>">
+                  <div class="step-icon">
+                    <% if (idx < currentStep) { %>
+                      <i class="fas fa-check"></i>
+                    <% } else if (idx === currentStep) { %>
+                      <% if (step === 'Processing') { %><i class="fas fa-cog fa-spin"></i>
+                      <% } else if (step === 'Shipped') { %><i class="fas fa-shipping-fast"></i>
+                      <% } else if (step === 'Delivering') { %><i class="fas fa-truck"></i>
+                      <% } else { %><i class="fas fa-home"></i><% } %>
+                    <% } else { %>
+                      <% if (step === 'Processing') { %><i class="fas fa-cog"></i>
+                      <% } else if (step === 'Shipped') { %><i class="fas fa-shipping-fast"></i>
+                      <% } else if (step === 'Delivering') { %><i class="fas fa-truck"></i>
+                      <% } else { %><i class="fas fa-home"></i><% } %>
+                    <% } %>
+                  </div>
+                  <div class="step-label"><%= step %></div>
+                </div>
+              <% }) %>
+            </div>
+            
+            <!-- Live Updates Info -->
+            <div class="mt-3 p-2 bg-white rounded d-flex align-items-center justify-content-between" style="border: 1px dashed #3b82f6;">
+              <div>
+                <small class="text-muted">Last updated:</small>
+                <small class="fw-bold text-primary ms-1"><%= new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></small>
+              </div>
+              <button class="btn btn-sm btn-outline-primary" onclick="location.reload()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+              </button>
+            </div>
+          </div>
+          
           <div class="card-body border-top delivery-info-section" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
             <div class="row align-items-center">
               <div class="col-md-8">
@@ -375,6 +421,103 @@
     footer {
       display: none !important;
     }
+  }
+  
+  /* Order Progress Tracker */
+  .order-progress-tracker {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    padding: 0 10px;
+  }
+  
+  .order-progress-tracker::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    right: 40px;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    z-index: 0;
+  }
+  
+  .order-progress-tracker .progress-line {
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    height: 4px;
+    background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
+    border-radius: 2px;
+    z-index: 1;
+    transition: width 0.5s ease;
+  }
+  
+  .progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+    flex: 1;
+    max-width: 80px;
+  }
+  
+  .progress-step .step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .progress-step.active .step-icon {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    transform: scale(1.1);
+    animation: pulse-step 2s infinite;
+  }
+  
+  .progress-step.completed .step-icon {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    animation: none;
+  }
+  
+  @keyframes pulse-step {
+    0%, 100% { box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); }
+    50% { box-shadow: 0 4px 20px rgba(59, 130, 246, 0.6); }
+  }
+  
+  .progress-step .step-label {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .progress-step.active .step-label,
+  .progress-step.completed .step-label {
+    color: #374151;
+  }
+  
+  /* Mobile responsive for progress tracker */
+  @media (max-width: 576px) {
+    .order-progress-tracker::before { left: 25px; right: 25px; top: 16px; }
+    .order-progress-tracker .progress-line { left: 25px; top: 16px; }
+    .progress-step .step-icon { width: 32px; height: 32px; font-size: 12px; }
+    .progress-step .step-label { font-size: 9px; }
   }
   
   /* Delivery Status Animations */

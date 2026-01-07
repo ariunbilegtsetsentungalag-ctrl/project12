@@ -128,14 +128,15 @@
             </label>
             <div class="position-relative">
               <input type="password" 
-                     class="form-control form-control-lg" 
+                     class="form-control form-control-lg pe-5" 
                      id="password" 
                      name="password" 
                      placeholder="<%- __('enter_password') %>"
                      required>
               <button type="button" 
-                      class="btn btn-link position-absolute end-0 top-50 translate-middle-y"
-                      onclick="togglePassword()">
+                      class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-muted password-toggle-btn"
+                      onclick="togglePassword()"
+                      tabindex="-1">
                 <i class="fas fa-eye" id="toggleIcon"></i>
               </button>
             </div>
@@ -182,6 +183,32 @@
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
   }
+  
+  /* Password toggle button styles */
+  .password-toggle-btn {
+    border: none;
+    background: transparent;
+    padding: 0.5rem;
+    z-index: 10;
+    text-decoration: none !important;
+  }
+  
+  .password-toggle-btn:hover {
+    color: var(--primary-color) !important;
+  }
+  
+  .password-toggle-btn:focus {
+    box-shadow: none;
+    outline: none;
+  }
+  
+  [data-theme="dark"] .password-toggle-btn {
+    color: #cbd5e1 !important;
+  }
+  
+  [data-theme="dark"] .password-toggle-btn:hover {
+    color: #3b82f6 !important;
+  }
 </style>
 
 <script>
@@ -189,14 +216,21 @@
     const passwordInput = document.getElementById('password');
     const toggleIcon = document.getElementById('toggleIcon');
     
+    if (!passwordInput || !toggleIcon) {
+      console.error('Password input or toggle icon not found');
+      return;
+    }
+    
     if (passwordInput.type === 'password') {
       passwordInput.type = 'text';
       toggleIcon.classList.remove('fa-eye');
       toggleIcon.classList.add('fa-eye-slash');
+      console.log('Password shown');
     } else {
       passwordInput.type = 'password';
       toggleIcon.classList.remove('fa-eye-slash');
       toggleIcon.classList.add('fa-eye');
+      console.log('Password hidden');
     }
   }
   

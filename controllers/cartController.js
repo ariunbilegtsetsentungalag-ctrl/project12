@@ -114,6 +114,87 @@ exports.addToCart = asyncHandler(async (req, res) => {
     res.redirect('/shop')
 });
 
+// AJAX version of addToCart for better UX
+exports.addToCartAPI = asyncHandler(async (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ success: false, message: 'Please sign in to add items to your cart', requireLogin: true });
+  }
+  
+  const productId = req.body.productId;
+  const quantity = parseInt(req.body.quantity) || 1;
+  const selectedSize = req.body.selectedSize;
+  const selectedColor = req.body.selectedColor;
+
+  const product = await Product.findById(productId);
+  
+  if (!product) {
+    return res.status(404).json({ success: false, message: 'Product not found' });
+  }
+
+  if (product.stockQuantity <= 0) {
+    return res.status(400).json({ success: false, message: 'This product is currently out of stock' });
+  }
+
+  if (product.stockQuantity < quantity) {
+    return res.status(400).json({ success: false, message: `Only ${product.stockQuantity} items available in stock` });
+  }
+
+  req.session.cart = req.session.cart || { items: [] };
+  const existingCartItem = req.session.cart.items.find(item => 
+    item.product._id.toString() === product._id.toString() && 
+    item.options.size === selectedSize && 
+    item.options.color === selectedColor
+  );
+  
+  const currentCartQuantity = existingCartItem ? existingCartItem.quantity : 0;
+  const totalRequestedQuantity = currentCartQuantity + quantity;
+  
+  if (product.stockQuantity < totalRequestedQuantity) {
+    return res.status(400).json({ 
+      success: false, 
+      message: `Cannot add ${quantity} more. Only ${product.stockQuantity - currentCartQuantity} available (${currentCartQuantity} in cart)` 
+    });
+  }
+
+  let itemPrice = product.basePrice;
+  if (selectedSize && product.sizes && product.sizes.length > 0) {
+    const sizeOption = product.sizes.find(s => s.name === selectedSize);
+    if (sizeOption) {
+      itemPrice = sizeOption.price;
+    }
+  }
+
+  const cartItem = {
+    product: {
+      _id: product._id,
+      name: product.name,
+      image: product.image,
+      basePrice: product.basePrice,
+      price: itemPrice
+    },
+    quantity,
+    options: {
+      size: selectedSize,
+      color: selectedColor
+    }
+  };
+
+  if (existingCartItem) {
+    existingCartItem.quantity += quantity;
+  } else {
+    req.session.cart.items.push(cartItem);
+  }
+  
+  const cartCount = req.session.cart.items.reduce((sum, item) => sum + item.quantity, 0);
+  
+  return res.json({ 
+    success: true, 
+    message: `${product.name} added to cart!`,
+    cartCount,
+    product: { name: product.name, image: product.image, price: itemPrice }
+  });
+});
+
 exports.removeFromCart = (req, res) => {
   const id = req.params.id
   const { size, color } = req.query

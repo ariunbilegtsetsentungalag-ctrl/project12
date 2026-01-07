@@ -42,10 +42,54 @@
             margin-bottom: 20px;
         }
         
-        /* Responsive search form */
-        @media (max-width: 768px) {
+        /* Mobile responsive improvements */
+        @media (max-width: 767px) {
             .search-form .row > div {
                 margin-bottom: 10px;
+            }
+            .product-image {
+                width: 60px;
+                height: 60px;
+            }
+            /* Hide less important columns on mobile */
+            .hide-on-mobile {
+                display: none !important;
+            }
+            .table td, .table th {
+                font-size: 0.8rem;
+                padding: 8px 6px;
+            }
+            .content-card h4 {
+                font-size: 1rem;
+            }
+            .d-flex.justify-content-between {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .d-flex.justify-content-between .btn {
+                width: 100%;
+            }
+            .alert {
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .product-image {
+                width: 45px;
+                height: 45px;
+            }
+            .table td, .table th {
+                font-size: 0.75rem;
+                padding: 6px 4px;
+            }
+            .badge {
+                font-size: 0.65rem;
+                padding: 3px 5px;
+            }
+            .btn-sm {
+                padding: 3px 6px;
+                font-size: 0.7rem;
             }
         }
     </style>
@@ -156,12 +200,12 @@
                                     <tr>
                                         <th>Image</th>
                                         <th>Name</th>
-                                        <th>Category</th>
+                                        <th class="hide-on-mobile">Category</th>
                                         <th>Price</th>
                                         <th>Stock</th>
-                                        <th>Delivery</th>
-                                        <th>Created By</th>
-                                        <th>Date</th>
+                                        <th class="hide-on-mobile">Delivery</th>
+                                        <th class="hide-on-mobile">Created By</th>
+                                        <th class="hide-on-mobile">Date</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -174,9 +218,9 @@
                                             <td>
                                                 <strong><%= product.name %></strong>
                                                 <br>
-                                                <small class="text-muted"><%= product.description.substring(0, 50) %>...</small>
+                                                <small class="text-muted d-none d-md-inline"><%= product.description.substring(0, 50) %>...</small>
                                             </td>
-                                            <td>
+                                            <td class="hide-on-mobile">
                                                 <span class="badge bg-secondary"><%= product.category %></span>
                                             </td>
                                             <td>
@@ -189,23 +233,23 @@
                                                 <% if (product.stockQuantity > 0) { %>
                                                     <span class="badge bg-success"><%= product.stockQuantity %></span>
                                                 <% } else { %>
-                                                    <span class="badge bg-warning">Out of Stock</span>
+                                                    <span class="badge bg-warning">Out</span>
                                                 <% } %>
                                             </td>
-                                            <td>
+                                            <td class="hide-on-mobile">
                                                 <span class="badge bg-info">
                                                     <i class="fas fa-truck me-1"></i>
                                                     <%= product.deliveryTime || 14 %> days
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td class="hide-on-mobile">
                                                 <% if (product.createdBy && product.createdBy.username) { %>
                                                     <%= product.createdBy.username %>
                                                 <% } else { %>
                                                     <span class="text-muted">System</span>
                                                 <% } %>
                                             </td>
-                                            <td>
+                                            <td class="hide-on-mobile">
                                                 <% if (product.createdAt) { %>
                                                     <%= product.createdAt.toLocaleDateString() %>
                                                 <% } else { %>
@@ -213,16 +257,16 @@
                                                 <% } %>
                                             </td>
                                             <td>
-                                                <div class="btn-group" role="group">
+                                                <div class="btn-group btn-group-sm" role="group">
                                                     <% if (product._id) { %>
-                                                        <a href="/admin/products/<%= product._id %>/edit" class="btn btn-sm btn-outline-primary">
+                                                        <a href="/admin/products/<%= product._id %>/edit" class="btn btn-sm btn-outline-primary" title="Edit">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
-                                                        <a href="/product/<%= product._id %>" target="_blank" class="btn btn-sm btn-outline-info">
+                                                        <a href="/product/<%= product._id %>" target="_blank" class="btn btn-sm btn-outline-info d-none d-sm-inline-block" title="View">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
                                                         <form method="POST" action="/admin/products/<%= product._id %>/delete" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?')">
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
                                                         </form>

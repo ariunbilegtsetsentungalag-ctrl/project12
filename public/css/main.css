@@ -89,6 +89,26 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Prevent text cursor on non-editable elements */
+h1, h2, h3, h4, h5, h6, p, span, div, section, article, header, footer, nav, aside, main,
+label, a, button, .btn, .hero-banner, .hero-content, .hero-title, .hero-subtitle,
+.section-title, .section-subtitle, .card-title, .product-name, .product-category {
+  cursor: default;
+}
+
+/* Allow cursor on interactive/editable elements */
+a, button, .btn, [role="button"], input, textarea, select, [contenteditable="true"] {
+  cursor: pointer;
+}
+
+input, textarea, select {
+  cursor: text;
+}
+
+input[type="submit"], input[type="button"], input[type="reset"] {
+  cursor: pointer;
+}
+
 /* ===============================================
    NAVIGATION
    =============================================== */

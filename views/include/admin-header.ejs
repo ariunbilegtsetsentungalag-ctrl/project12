@@ -134,21 +134,255 @@
         .card-body {
             padding: 15px;
         }
-        @media (max-width: 768px) {
+        /* Mobile Responsive Styles */
+        @media (max-width: 991px) {
             .admin-sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
+                z-index: 1050;
+                width: 260px;
+                box-shadow: 4px 0 15px rgba(0,0,0,0.3);
             }
             .admin-sidebar.show {
                 transform: translateX(0);
             }
             .main-content {
                 margin-left: 0;
-                padding: 10px 15px;
+                padding: 15px;
                 width: 100%;
             }
             .admin-content-wrapper {
                 width: 100%;
+            }
+            /* Mobile overlay when sidebar is open */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 60px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 1040;
+            }
+            .sidebar-overlay.show {
+                display: block;
+            }
+            /* Stat cards - 2 per row on tablet */
+            .stat-card {
+                padding: 15px;
+            }
+            .stat-card h3 {
+                font-size: 1.5rem;
+            }
+            /* Table improvements for mobile */
+            .table-responsive {
+                margin: 0 -15px;
+                padding: 0 15px;
+            }
+            .table td, .table th {
+                white-space: nowrap;
+                font-size: 0.85rem;
+                padding: 8px 10px;
+            }
+            /* Page header mobile */
+            .page-header h2 {
+                font-size: 1.4rem;
+            }
+            .page-header p {
+                font-size: 0.85rem;
+            }
+            /* Card padding */
+            .content-card {
+                padding: 12px;
+            }
+            /* Form elements full width */
+            .form-control, .form-select {
+                font-size: 16px; /* Prevents iOS zoom on focus */
+            }
+            /* Button groups stack on mobile */
+            .btn-group-mobile {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .btn-group-mobile .btn {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            body {
+                padding-top: 56px;
+            }
+            .main-navbar {
+                padding: 8px 0;
+            }
+            .admin-sidebar {
+                top: 56px;
+                width: 85%;
+                max-width: 280px;
+            }
+            .main-content {
+                padding: 10px;
+            }
+            /* Stat cards - full width on phone */
+            .row .col-md-3,
+            .row .col-md-4,
+            .row .col-md-6 {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+            .stat-card {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+            .stat-card h3 {
+                font-size: 1.25rem;
+                margin-bottom: 3px;
+            }
+            .stat-card p {
+                font-size: 0.8rem;
+            }
+            .stat-card i.fa-2x {
+                font-size: 1.3rem;
+            }
+            /* Content cards */
+            .content-card {
+                padding: 10px;
+                margin-bottom: 10px;
+                border-radius: 6px;
+            }
+            /* Page header */
+            .page-header {
+                padding-bottom: 8px;
+                margin-bottom: 12px;
+            }
+            .page-header h2 {
+                font-size: 1.2rem;
+            }
+            /* Tables */
+            .table td, .table th {
+                font-size: 0.75rem;
+                padding: 6px 8px;
+            }
+            .table img {
+                width: 40px !important;
+                height: 40px !important;
+            }
+            /* Hide less important columns on mobile */
+            .hide-mobile {
+                display: none !important;
+            }
+            /* Buttons */
+            .btn-sm {
+                padding: 4px 8px;
+                font-size: 0.75rem;
+            }
+            /* Forms */
+            .form-label {
+                font-size: 0.85rem;
+                margin-bottom: 4px;
+            }
+            /* Navbar adjustments */
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            .navbar-nav .nav-link {
+                padding: 6px 10px !important;
+                font-size: 0.85rem;
+            }
+            /* Alert boxes */
+            .alert {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+            /* Recent products section */
+            .recent-products h4 {
+                font-size: 1rem;
+            }
+            .recent-products .btn {
+                padding: 4px 10px;
+                font-size: 0.75rem;
+            }
+        }
+        
+        /* Make toggle button more visible on mobile */
+        .navbar-toggler {
+            border: 2px solid rgba(255,255,255,0.5);
+            padding: 6px 10px;
+        }
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.25);
+        }
+        
+        /* Admin navbar collapse styling - dropdown menu on mobile */
+        .admin-nav-collapse {
+            flex-grow: 1;
+        }
+        
+        @media (max-width: 991px) {
+            .admin-nav-collapse {
+                position: absolute;
+                top: 100%;
+                right: 0;
+                left: 0;
+                background: #2c3e50;
+                padding: 0;
+                border-top: 1px solid rgba(255,255,255,0.1);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            .admin-nav-collapse .navbar-nav {
+                flex-direction: column;
+                width: 100%;
+                padding: 10px 0;
+            }
+            .admin-nav-collapse .nav-link {
+                padding: 14px 20px !important;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                color: #ecf0f1 !important;
+                font-size: 1rem;
+            }
+            .admin-nav-collapse .nav-link:hover,
+            .admin-nav-collapse .nav-link.active {
+                background: #3498db;
+                color: white !important;
+            }
+            .admin-nav-collapse .nav-link i {
+                width: 25px;
+                text-align: center;
+                margin-right: 10px;
+            }
+            .admin-nav-collapse .nav-divider {
+                border-top: 2px solid #3498db;
+                margin: 10px 15px;
+            }
+            .admin-nav-collapse .nav-header {
+                color: #95a5a6;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                padding: 10px 20px 5px;
+                letter-spacing: 1px;
+            }
+            /* Hide desktop sidebar on mobile */
+            .admin-sidebar {
+                display: none !important;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+        }
+        
+        @media (min-width: 992px) {
+            .admin-nav-collapse {
+                display: flex !important;
+                flex-basis: auto;
+            }
+            .admin-nav-collapse .mobile-menu-items {
+                display: none !important;
             }
         }
     </style>
@@ -159,23 +393,116 @@
         <div class="container-fluid">
             <% if (typeof user !== 'undefined' && user && user.role === 'business_owner') { %>
             <a class="navbar-brand" href="/business-owner">
-                <i class="fas fa-store"></i> Business Dashboard
+                <i class="fas fa-store"></i> <span class="d-none d-sm-inline">Business Dashboard</span><span class="d-sm-none">Business</span>
             </a>
             <% } else { %>
             <a class="navbar-brand" href="/admin">
-                <i class="fas fa-tools"></i> Admin Panel
+                <i class="fas fa-tools"></i> <span class="d-none d-sm-inline">Admin Panel</span><span class="d-sm-none">Admin</span>
             </a>
             <% } %>
-            <button class="navbar-toggler d-lg-none" type="button" onclick="toggleSidebar()">
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavCollapse" aria-controls="adminNavCollapse" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/shop" target="_blank">
-                    <i class="fas fa-store"></i> View Shop
-                </a>
-                <a class="nav-link" href="/logout">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
+            
+            <div class="collapse navbar-collapse admin-nav-collapse" id="adminNavCollapse">
+                <!-- Mobile Menu Items (Dashboard, Products, etc.) -->
+                <ul class="navbar-nav mobile-menu-items">
+                    <% if (typeof user !== 'undefined' && user && user.role === 'business_owner') { %>
+                    <!-- Business Owner Mobile Menu -->
+                    <li class="nav-header">Business Menu</li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && title.includes('Dashboard')) ? 'active' : '' %>" href="/business-owner">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && title.includes('Bundle')) ? 'active' : '' %>" href="/business-owner/buy-bundle">
+                            <i class="fas fa-cubes"></i> Buy Bundle
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && title.includes('Product') && !title.includes('Add')) ? 'active' : '' %>" href="/business-owner/products">
+                            <i class="fas fa-box"></i> My Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && title.includes('Add') && title.includes('Product')) ? 'active' : '' %>" href="/business-owner/add-product">
+                            <i class="fas fa-plus"></i> Add Product
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && (title.includes('Analytics') || title.includes('Income'))) ? 'active' : '' %>" href="/business-owner/income-analytics">
+                            <i class="fas fa-chart-line"></i> Income Analytics
+                        </a>
+                    </li>
+                    <li><div class="nav-divider"></div></li>
+                    <% } else { %>
+                    <!-- Admin Mobile Menu -->
+                    <li class="nav-header">Admin Menu</li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && title.includes('Dashboard')) ? 'active' : '' %>" href="/admin">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && title.includes('Product') && !title.includes('Add')) ? 'active' : '' %>" href="/admin/products">
+                            <i class="fas fa-box"></i> Manage Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && title.includes('Add') && title.includes('Product')) ? 'active' : '' %>" href="/admin/add-product">
+                            <i class="fas fa-plus"></i> Add Product
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && title.includes('Categories')) ? 'active' : '' %>" href="/admin/categories">
+                            <i class="fas fa-tags"></i> Categories
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && title.includes('Promo') && !title.includes('Add')) ? 'active' : '' %>" href="/admin/promo-codes">
+                            <i class="fas fa-ticket-alt"></i> Promo Codes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && title.includes('Users')) ? 'active' : '' %>" href="/admin/users">
+                            <i class="fas fa-users"></i> Manage Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= (title && (title.includes('Analytics') || title.includes('Income'))) ? 'active' : '' %>" href="/admin/income-analytics">
+                            <i class="fas fa-chart-line"></i> Income Analytics
+                        </a>
+                    </li>
+                    <li><div class="nav-divider"></div></li>
+                    <% } %>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop" target="_blank">
+                            <i class="fas fa-store"></i> View Shop
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Desktop top nav items (always visible on desktop) -->
+                <ul class="navbar-nav ms-auto d-none d-lg-flex">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop" target="_blank">
+                            <i class="fas fa-store"></i> View Shop
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
