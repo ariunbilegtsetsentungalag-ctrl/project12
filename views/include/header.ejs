@@ -278,41 +278,29 @@
 <!-- Mobile Navigation JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Mobile menu toggle functionality
-  const navbarToggler = document.querySelector('.navbar-toggler');
+  // Close menu when clicking on a nav link (mobile)
+  const navLinks = document.querySelectorAll('#navbarContent .nav-link');
   const navbarCollapse = document.querySelector('#navbarContent');
+  const navbarToggler = document.querySelector('.navbar-toggler');
   
-  if (navbarToggler && navbarCollapse) {
-    navbarToggler.addEventListener('click', function() {
-      // Toggle the collapse state
-      const isExpanded = navbarToggler.getAttribute('aria-expanded') === 'true';
-      
-      if (isExpanded) {
-        // Close the menu
-        navbarCollapse.classList.remove('show');
-        navbarToggler.setAttribute('aria-expanded', 'false');
-        navbarToggler.classList.add('collapsed');
-      } else {
-        // Open the menu
-        navbarCollapse.classList.add('show');
-        navbarToggler.setAttribute('aria-expanded', 'true');
-        navbarToggler.classList.remove('collapsed');
+  navLinks.forEach(link => {
+    link.addEventListener('click', function() {
+      // Close mobile menu after clicking a link
+      if (window.innerWidth < 992 && navbarCollapse.classList.contains('show')) {
+        // Use Bootstrap's collapse API
+        const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+        if (bsCollapse) {
+          bsCollapse.hide();
+        } else {
+          navbarCollapse.classList.remove('show');
+          if (navbarToggler) {
+            navbarToggler.setAttribute('aria-expanded', 'false');
+            navbarToggler.classList.add('collapsed');
+          }
+        }
       }
     });
-
-    // Close menu when clicking on a nav link (mobile)
-    const navLinks = document.querySelectorAll('#navbarContent .nav-link');
-    navLinks.forEach(link => {
-      link.addEventListener('click', function() {
-        // Close mobile menu after clicking a link
-        if (window.innerWidth < 992) { // Only on mobile/tablet
-          navbarCollapse.classList.remove('show');
-          navbarToggler.setAttribute('aria-expanded', 'false');
-          navbarToggler.classList.add('collapsed');
-        }
-      });
-    });
-  }
+  });
 });
 </script>
 
