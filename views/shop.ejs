@@ -243,7 +243,7 @@
   text-align: center;
   color: white;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .hero-banner::before {
@@ -287,34 +287,36 @@
   background: white;
   border-radius: 15px;
   margin-top: 8px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  max-height: 300px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  max-height: 350px;
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 9999;
   display: none;
 }
 .search-suggestions.active { display: block; }
 .search-suggestion-item {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
+  padding: 10px 16px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.15s;
   text-decoration: none;
   color: #1f2937;
+  border-bottom: 1px solid #f3f4f6;
 }
+.search-suggestion-item:last-child { border-bottom: none; }
 .search-suggestion-item:hover { background: #f3f4f6; }
 .search-suggestion-item img {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   object-fit: cover;
-  border-radius: 8px;
-  margin-right: 12px;
+  border-radius: 6px;
+  margin-right: 10px;
 }
 .search-suggestion-item .suggestion-info { flex: 1; }
-.search-suggestion-item .suggestion-name { font-weight: 600; font-size: 0.9rem; }
-.search-suggestion-item .suggestion-category { font-size: 0.75rem; color: #6b7280; }
-.search-suggestion-item .suggestion-price { font-weight: 700; color: #667eea; }
+.search-suggestion-item .suggestion-name { font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-suggestion-item .suggestion-category { font-size: 0.7rem; color: #6b7280; }
+.search-suggestion-item .suggestion-price { font-weight: 700; color: #667eea; font-size: 0.9rem; }
 .search-box button {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -621,6 +623,9 @@ function scrollCarousel(btn, direction) {
   
   if (!searchInput || !suggestionsContainer) return;
   
+  // Pre-fetch products on page load for instant search
+  fetchProducts();
+  
   // Fetch all products once for quick searching
   async function fetchProducts() {
     if (cachedProducts) return cachedProducts;
@@ -641,13 +646,14 @@ function scrollCarousel(btn, direction) {
       p.name.toLowerCase().includes(searchLower) ||
       (p.description && p.description.toLowerCase().includes(searchLower)) ||
       (p.category && p.category.toLowerCase().includes(searchLower))
-    ).slice(0, 6); // Limit to 6 suggestions
+    ).slice(0, 5); // Show 5 suggestions
   }
   
   // Render suggestions
   function renderSuggestions(products) {
     if (products.length === 0) {
-      suggestionsContainer.classList.remove('active');
+      suggestionsContainer.innerHTML = '<div style="padding: 15px; text-align: center; color: #6b7280;">No products found</div>';
+      suggestionsContainer.classList.add('active');
       return;
     }
     
@@ -664,22 +670,28 @@ function scrollCarousel(btn, direction) {
     suggestionsContainer.classList.add('active');
   }
   
-  // Input event handler
+  // Input event handler - faster 100ms debounce
   searchInput.addEventListener('input', function() {
     const term = this.value.trim();
     
     clearTimeout(debounceTimer);
     
-    if (term.length < 2) {
+    if (term.length < 1) {
       suggestionsContainer.classList.remove('active');
       return;
     }
     
-    debounceTimer = setTimeout(async () => {
-      const products = await fetchProducts();
-      const filtered = filterProducts(products, term);
+    // Instant search if products are cached
+    if (cachedProducts) {
+      const filtered = filterProducts(cachedProducts, term);
       renderSuggestions(filtered);
-    }, 200);
+    } else {
+      debounceTimer = setTimeout(async () => {
+        const products = await fetchProducts();
+        const filtered = filterProducts(products, term);
+        renderSuggestions(filtered);
+      }, 100);
+    }
   });
   
   // Hide suggestions when clicking outside
@@ -692,9 +704,8 @@ function scrollCarousel(btn, direction) {
   // Show suggestions on focus if there's text
   searchInput.addEventListener('focus', async function() {
     const term = this.value.trim();
-    if (term.length >= 2) {
-      const products = await fetchProducts();
-      const filtered = filterProducts(products, term);
+    if (term.length >= 1 && cachedProducts) {
+      const filtered = filterProducts(cachedProducts, term);
       renderSuggestions(filtered);
     }
   });
