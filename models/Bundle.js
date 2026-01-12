@@ -5,7 +5,7 @@ const BUNDLE_TIERS = {
   starter: {
     name: 'Starter',
     products: 5,
-    price: 5,
+    price: 1000,
     description: 'Perfect for trying out our platform',
     color: '#10b981',
     icon: 'fa-seedling'
@@ -13,7 +13,7 @@ const BUNDLE_TIERS = {
   basic: {
     name: 'Basic',
     products: 10,
-    price: 10,
+    price: 2000,
     description: 'Great for small businesses',
     color: '#3b82f6',
     icon: 'fa-store'
@@ -21,7 +21,7 @@ const BUNDLE_TIERS = {
   standard: {
     name: 'Standard',
     products: 15,
-    price: 15,
+    price: 3000,
     description: 'Most popular choice',
     color: '#8b5cf6',
     icon: 'fa-building',
@@ -30,7 +30,7 @@ const BUNDLE_TIERS = {
   premium: {
     name: 'Premium',
     products: 20,
-    price: 20,
+    price: 5000,
     description: 'For growing businesses',
     color: '#f59e0b',
     icon: 'fa-crown'
@@ -38,7 +38,7 @@ const BUNDLE_TIERS = {
   unlimited: {
     name: 'Unlimited',
     products: 999,
-    price: 50,
+    price: 10000,
     description: 'No limits, full access',
     color: '#ef4444',
     icon: 'fa-infinity'
