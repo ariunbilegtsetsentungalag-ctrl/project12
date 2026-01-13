@@ -78,6 +78,7 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
+            connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"],
             imgSrc: ["'self'", "data:", "https:"],
@@ -91,6 +92,7 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 
 // Handle favicon requests to prevent 404 errors
 app.get('/favicon.ico', (req, res) => res.status(204).end())
+app.get('/favicon.png', (req, res) => res.status(204).end())
 
 // Handle Vercel internal paths (analytics, insights) to prevent 404 errors
 app.get('/_vercel/*', (req, res) => res.status(204).end())
