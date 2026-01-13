@@ -224,20 +224,32 @@ exports.getAddProduct = async (req, res) => {
     const userId = req.session.userId;
     const user = await User.findById(userId).lean();
     
+    console.log('🔍 Add Product Access Check:', {
+      username: user.username,
+      role: user.role,
+      hasBundle: !!user.businessBundle,
+      tier: user.businessBundle?.tier,
+      allowed: user.businessBundle?.productsAllowed,
+      used: user.businessBundle?.productsUsed
+    });
+    
     // Check if user has a valid bundle
     const hasBundle = user.businessBundle && user.businessBundle.tier !== 'none' && user.businessBundle.productsAllowed > 0;
     const canAddProduct = hasBundle && (user.businessBundle.productsUsed < user.businessBundle.productsAllowed);
     
     if (!hasBundle) {
+      console.log('❌ User has no valid bundle');
       req.flash('error', 'You need to purchase a product bundle before adding products.');
       return res.redirect('/business-owner/buy-bundle');
     }
     
     if (!canAddProduct) {
+      console.log('❌ User reached product limit');
       req.flash('error', 'You have reached your product limit. Please upgrade your bundle to add more products.');
       return res.redirect('/business-owner/buy-bundle');
     }
     
+    console.log('✅ User can add products');
     const categories = await Category.find({ isActive: true }).sort({ name: 1 }).lean();
     res.render('business-owner/add-product', {
       title: 'Add New Product',
@@ -259,11 +271,22 @@ exports.createProduct = async (req, res) => {
     const userId = req.session.userId;
     const user = await User.findById(userId);
     
+    console.log('📦 Create Product Request:', {
+      username: user.username,
+      bundle: user.businessBundle,
+      bodyData: {
+        name: req.body.name,
+        category: req.body.category,
+        basePrice: req.body.basePrice
+      }
+    });
+    
     // Check bundle limits before creating product
     const hasBundle = user.businessBundle && user.businessBundle.tier !== 'none' && user.businessBundle.productsAllowed > 0;
     const canAddProduct = hasBundle && (user.businessBundle.productsUsed < user.businessBundle.productsAllowed);
     
     if (!canAddProduct) {
+      console.log('❌ Cannot add product - limit reached');
       req.flash('error', 'You have reached your product limit. Please upgrade your bundle.');
       return res.redirect('/business-owner/buy-bundle');
     }
@@ -338,15 +361,17 @@ exports.createProduct = async (req, res) => {
     });
 
     await product.save();
+    console.log('✅ Product saved:', product._id);
     
     // Update user's bundle productsUsed count
     user.businessBundle.productsUsed = (user.businessBundle.productsUsed || 0) + 1;
     await user.save();
+    console.log('✅ Updated productsUsed to:', user.businessBundle.productsUsed);
 
     req.flash('success', 'Product added successfully!');
     res.redirect('/business-owner/products');
   } catch (error) {
-    console.error('Create product error:', error);
+    console.error('❌ Create product error:', error);
     req.flash('error', 'Failed to add product: ' + error.message);
     res.redirect('/business-owner/add-product');
   }
