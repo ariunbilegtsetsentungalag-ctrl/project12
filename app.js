@@ -162,7 +162,7 @@ app.use(session({
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: dbURI,
-    dbName: 'App'
+    dbName: 'Ariuka'
   }),
   cookie: {
     httpOnly: true,
